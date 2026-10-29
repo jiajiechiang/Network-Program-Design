@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路自動化中階教學：6 大進階網管實戰</title>
+    <style>
+        :root {
+            --primary-color: #1e1b4b; /* Deep Indigo */
+            --secondary-color: #6366f1; /* Indigo / Purple */
+            --accent-color: #10b981; /* Emerald */
+            --bg-color: #0f172a;
+            --text-color: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-color: #f8fafc;
+            --border-color: #334155;
+            --card-bg: #111827;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--secondary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: #ffffff; margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #312e81; color: #c7d2fe; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid #3730a3; }
+        .file-header { background-color: #020617; color: #94a3b8; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border: 1px solid var(--border-color); border-bottom: none; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; border: 1px solid var(--border-color); }
+        code { background-color: #334155; color: #f43f5e; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; border: none; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #818cf8; font-weight: bold; } /* keyword */
+        .str { color: #34d399; } /* string */
+        .cmt { color: #64748b; font-style: italic; } /* comment */
+        .fn { color: #f472b6; } /* function */
+        .cls { color: #fbbf24; font-style: italic; } /* class */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路自動化中階教學</h1>
+    <p>結構化網管：TextFSM 文字解析、Jinja2 模板生成、Netmiko 檔案傳輸與 Telnet 支援</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>中階自動化環境準備：</strong><br>
+        基礎篇我們學會了透過 Netmiko 抓取純文字。中階篇我們將學習如何將雜亂的純文字轉換成「結構化資料 (Structured Data)」，使用樣版動態產生設定檔，以及自動化檔案傳輸。<br><br>
+        請在終端機安裝套件：<code>pip install netmiko textfsm jinja2 pandas</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 結構化解析：使用 TextFSM 將 CLI 轉換為字典</h2>
+        <p>傳統用正則表達式 (Regex) 切字串非常容易出錯。<strong>TextFSM</strong> 是一個由 Google 開發的強大工具，配合內建的樣版庫 (ntc-templates)，能自動把 `show ip interface brief` 變成乾淨的 Python 字典列表！</p>
+        
+        <div class="file-header">netmiko_textfsm_demo.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+<span class="kw">import</span> json
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> net_connect:
+    <span class="cmt"># Netmiko 只要加上 use_textfsm=True 參數，就會自動套用模板解析</span>
+    structured_data = net_connect.send_command(
+        <span class="str">'show ip interface brief'</span>, 
+        use_textfsm=<span class="kw">True</span>
+    )
+    
+    <span class="kw">print</span>(<span class="str">"=== 解析後的結構化資料 (List of Dictionaries) ==="</span>)
+    <span class="kw">print</span>(json.dumps(structured_data, indent=<span class="num">4</span>, ensure_ascii=<span class="kw">False</span>))</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 動態設定生成：使用 Jinja2 產生 VLAN 與介面設定</h2>
+        <p>手動寫幾十行的 switch 設定很容易漏掉。我們可以使用 <strong>Jinja2</strong> 模板引擎，透過變數 (Variables) 動態迴圈產生整批標準化設定檔。</p>
+
+        <div class="file-header">vlan_template.j2 (Jinja2 模板檔)</div>
+        <pre><code><span class="cmt"># 動態產生 VLAN 與介面設定</span>
+{% for vlan in vlans %}
+vlan {{ vlan.id }}
+ name {{ vlan.name }}
+{% endfor %}
+
+{% for intf in interfaces %}
+interface {{ intf.name }}
+ switchport mode access
+ switchport access vlan {{ intf.vlan }}
+ description Connected to {{ intf.desc }}
+ no shutdown
+{% endfor %}</code></pre>
+
+        <div class="file-header">generate_config.py (Python 生成器)</div>
+        <pre><code><span class="kw">from</span> jinja2 <span class="kw">import</span> Template
+
+<span class="cmt"># 1. 準備要帶入模板的變數資料</span>
+template_data = {
+    <span class="str">'vlans'</span>: [
+        {<span class="str">'id'</span>: <span class="num">10</span>, <span class="str">'name'</span>: <span class="str">'Management'</span>},
+        {<span class="str">'id'</span>: <span class="num">20</span>, <span class="str">'name'</span>: <span class="str">'Employees'</span>},
+        {<span class="str">'id'</span>: <span class="num">30</span>, <span class="str">'name'</span>: <span class="str">'Guests'</span>}
+    ],
+    <span class="str">'interfaces'</span>: [
+        {<span class="str">'name'</span>: <span class="str">'GigabitEthernet0/1'</span>, <span class="str">'vlan'</span>: <span class="num">20</span>, <span class="str">'desc'</span>: <span class="str">'PC-Alice'</span>},
+        {<span class="str">'name'</span>: <span class="str">'GigabitEthernet0/2'</span>, <span class="str">'vlan'</span>: <span class="num">20</span>, <span class="str">'desc'</span>: <span class="str">'PC-Bob'</span>}
+    ]
+}
+
+<span class="cmt"># 2. 讀取模板並渲染</span>
+<span class="kw">with</span> open(<span class="str">'vlan_template.j2'</span>, <span class="str">'r'</span>, encoding=<span class="str">'utf-8'</span>) <span class="kw">as</span> f:
+    template_content = f.read()
+
+t = Template(template_content)
+rendered_config = t.render(template_data)
+
+<span class="kw">print</span>(<span class="str">"=== 成功動態生成的設備設定 ==="</span>)
+<span class="kw">print</span>(rendered_config)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 自動化批次派發：結合 Jinja2 與 Netmiko</h2>
+        <p>將 Demo 2 產生的 Jinja2 動態設定，直接透過 Netmiko 的 <code>send_config_set</code> 批次推送到多台路由器上！</p>
+
+        <div class="file-header">deploy_jinja_config.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+<span class="kw">from</span> jinja2 <span class="kw">import</span> Template
+
+<span class="cmt"># 模擬動態生成設定指令</span>
+config_template = <span class="str">"""
+{% for vlan_id in vlans %}
+vlan {{ vlan_id }}
+{% endfor %}
+"""</span>
+t = Template(config_template)
+commands_list = t.render(vlans=[<span class="num">100</span>, <span class="num">200</span>, <span class="num">300</span>]).strip().splitlines()
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> conn:
+    <span class="kw">print</span>(<span class="str">"正在派發動態設定..."</span>)
+    output = conn.send_config_set(commands_list)
+    <span class="kw">print</span>(output)
+    conn.save_config()</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> Netmiko 檔案傳輸：透過 SCP 上傳韌體或設定檔</h2>
+        <p>除了敲指令，網管常常需要將新版韌體 (.bin) 或批次設定檔透過 SFTP/SCP 上傳到設備的 Flash 記憶體中。Netmiko 內建了便捷的檔案傳輸函式。</p>
+
+        <div class="file-header">netmiko_scp_upload.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+<span class="kw">from</span> netmiko.scp_handler <span class="kw">import</span> FileTransfer
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> net_connect:
+    source_file = <span class="str">'new_image.bin'</span>
+    destination_file = <span class="str">'new_image.bin'</span>
+    
+    <span class="cmt"># 初始化 FileTransfer 物件</span>
+    scp_handler = FileTransfer(
+        net_connect, 
+        source_file=source_file, 
+        dest_file=destination_file, 
+        direction=<span class="str">'put'</span> <span class="cmt"># 'put' 代表上傳到設備，'get' 代表從設備下載</span>
+    )
+    
+    <span class="kw">if not</span> scp_handler.check_file_exists():
+        <span class="kw">print</span>(<span class="str">"開始上傳檔案至設備 Flash..."</span>)
+        scp_handler.transfer_file()
+        <span class="kw">print</span>(<span class="str">"檔案上傳完畢！"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(<span class="str">"設備 Flash 中已經存在同名檔案，略過上傳。"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 支援遺留設備：使用 Telnet 進行自動化連線</h2>
+        <p>雖然多數現代設備使用 SSH，但部分老舊機房或測試環境仍強制使用 Telnet。Netmiko 只需要把 `device_type` 改成對應的 telnet 型號就能完美支援。</p>
+
+        <div class="file-header">netmiko_telnet_connect.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+legacy_device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios_telnet'</span>, <span class="cmt"># 指定 Telnet 驅動類型</span>
+    <span class="str">'host'</span>: <span class="str">'192.168.1.254'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'legacy_secret'</span>,
+    <span class="str">'port'</span>: <span class="num">23</span> <span class="cmt"># Telnet 預設 Port</span>
+}
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(<span class="str">"正在透過 Telnet 連線至老舊設備..."</span>)
+    <span class="kw">with</span> ConnectHandler(**legacy_device) <span class="kw">as</span> conn:
+        version = conn.send_command(<span class="str">'show version'</span>)
+        <span class="kw">print</span>(version[:<span class="num">300</span>]) <span class="cmt"># 印出前 300 字元</span>
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="kw">print</span>(f<span class="str">"Telnet 連線失敗：{e}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 將巡檢結構化資料匯出為 Excel 報表 (Pandas)</h2>
+        <p>結合 Demo 1 的 TextFSM 結構化解析與 Pandas 套件，我們能將全網路由器的介面 IP 與狀態一鍵匯出成整齊的 Excel 報表，供主管稽核！</p>
+
+        <div class="file-header">export_network_excel.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> conn:
+    <span class="cmt"># 透過 TextFSM 取得結構化字典列表</span>
+    interfaces_data = conn.send_command(<span class="str">'show ip interface brief'</span>, use_textfsm=<span class="kw">True</span>)
+    
+<span class="cmt"># 將 Python 列表轉換為 Pandas DataFrame</span>
+df = pd.DataFrame(interfaces_data)
+
+<span class="cmt"># 匯出成 Excel 檔案</span>
+excel_filename = <span class="str">'network_interfaces_report.xlsx'</span>
+df.to_excel(excel_filename, index=<span class="kw">False</span>, sheet_name=<span class="str">'Interfaces'</span>)
+
+<span class="kw">print</span>(f<span class="str">"結構化網路報表已成功匯出至：{excel_filename}"</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

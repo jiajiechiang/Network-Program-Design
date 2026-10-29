@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路 API 互動自動化基礎教學：6 大 RESTful API 實戰</title>
+    <style>
+        :root {
+            --primary-color: #0f172a; /* Slate Dark */
+            --secondary-color: #0284c7; /* Sky Blue / API Blue */
+            --accent-color: #0ea5e9; /* Light Blue */
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --code-bg: #1e293b;
+            --code-color: #e2e8f0;
+            --border-color: #cbd5e1;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--primary-color); border-bottom: 2px solid var(--secondary-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: var(--primary-color); margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #f0f9ff; color: #0369a1; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid #bae6fd; }
+        .file-header { background-color: #0f172a; color: #94a3b8; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border-bottom: 1px solid #334155; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; }
+        code { background-color: #e2e8f0; color: #0284c7; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #60a5fa; font-weight: bold; } /* keyword */
+        .str { color: #34d399; } /* string */
+        .cmt { color: #64748b; font-style: italic; } /* comment */
+        .fn { color: #f472b6; } /* function */
+        .cls { color: #fbbf24; font-style: italic; } /* class */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路 API 互動自動化基礎教學</h1>
+    <p>從 CLI 走向現代 API 管理：透過 Requests 模組操作網路設備 REST API 與 IPAM 系統 6 大入門實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>網路 API 自動化環境準備：</strong><br>
+        現代網路設備 (如 Cisco IOS-XE, Arista EOS, 雲端防火牆) 以及網管系統 (如 NetBox IPAM) 普遍支援 <strong>RESTful API</strong>。<br>
+        相較於傳統透過 CLI 敲字串，使用 API 可以直接回傳結構化的 JSON 資料，精準又安全。<br><br>
+        基礎篇我們將使用 Python 最核心的 HTTP 請求套件：<code>requests</code>。<br>
+        請在終端機安裝：<code>pip install requests urllib3</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 基礎 GET 請求：向網路設備 REST API 查詢系統狀態</h2>
+        <p>網路 API 互動的第一步是發送 HTTP GET 請求。我們使用 <code>requests.get()</code> 取得網路設備或控制器的系統基礎資訊。</p>
+        
+        <div class="file-header">api_get_basic.py</div>
+        <pre><code><span class="kw">import</span> requests
+
+<span class="cmt"># 略過安全性警告 (若設備使用自簽憑證 HTTPS)</span>
+<span class="kw">import</span> urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+<span class="cmt"># 目標網路設備或控制器的 REST API 網址</span>
+api_url = <span class="str">"https://192.168.1.1/restconf/data/ietf-system:system-state"</span>
+
+<span class="cmt"># 發送 GET 請求 (帶入帳號密碼與略過憑證驗證)</span>
+response = requests.get(
+    api_url, 
+    auth=(<span class="str">'admin'</span>, <span class="str">'secret_password'</span>), 
+    verify=<span class="kw">False</span>,
+    timeout=<span class="num">5</span>
+)
+
+<span class="cmt"># 檢查 HTTP 狀態碼 (200 代表成功)</span>
+<span class="kw">print</span>(<span class="str">"HTTP 狀態碼："</span>, response.status_code)
+
+<span class="kw">if</span> response.status_code == <span class="num">200</span>:
+    <span class="cmt"># 將回傳的 JSON 轉為 Python 字典</span>
+    system_data = response.json()
+    <span class="kw">print</span>(<span class="str">"系統狀態資料："</span>, system_data)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">" API 請求失敗，錯誤代碼："</span>, response.status_code)</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 設定 Headers 與 Accept 標頭 (指定 JSON 格式)</h2>
+        <p>現代網路 API 通常支援多種資料格式 (如 JSON、XML)。我們需要在 HTTP 請求的 Headers 中明確宣告 <code>Accept: application/json</code>，確保設備回傳我們想要的 JSON 結構。</p>
+
+        <div class="file-header">api_headers_demo.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+api_url = <span class="str">"https://192.168.1.1/restconf/data/ietf-interfaces:interfaces"</span>
+
+<span class="cmt"># 定義標準的 API 請求標頭 (Headers)</span>
+headers = {
+    <span class="str">"Accept"</span>: <span class="str">"application/yang-data+json"</span>,
+    <span class="str">"Content-Type"</span>: <span class="str">"application/yang-data+json"</span>
+}
+
+response = requests.get(
+    api_url, 
+    headers=headers, 
+    auth=(<span class="str">'admin'</span>, <span class="str">'secret'</span>), 
+    verify=<span class="kw">False</span>
+)
+
+<span class="kw">if</span> response.status_code == <span class="num">200</span>:
+    <span class="kw">print</span>(<span class="str">"成功獲取介面設定資料！"</span>)
+    <span class="kw">print</span>(response.json())
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"錯誤："</span>, response.text)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> HTTP POST 請求：透過 API 動態建立 VLAN 或設定</h2>
+        <p>透過 API 不只能「看資料 (GET)」，更能「改資料 (POST/PUT)」。我們透過傳送 JSON 負載 (Payload)，讓路由器自動建立一個新的 VLAN。</p>
+
+        <div class="file-header">api_post_config.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+api_url = <span class="str">"https://192.168.1.1/restconf/data/Cisco-IOS-XE-native:native/vlan"</span>
+
+headers = {
+    <span class="str">"Accept"</span>: <span class="str">"application/yang-data+json"</span>,
+    <span class="str">"Content-Type"</span>: <span class="str">"application/yang-data+json"</span>
+}
+
+<span class="cmt"># 準備要傳送的 JSON 設定內容 (Payload)</span>
+payload = {
+    <span class="str">"Cisco-IOS-XE-native:vlan-list"</span>: [
+        {
+            <span class="str">"id"</span>: <span class="num">100</span>,
+            <span class="str">"name"</span>: <span class="str">"API_Created_VLAN"</span>
+        }
+    ]
+}
+
+<span class="cmt"># 發送 POST 請求</span>
+response = requests.post(
+    api_url, 
+    headers=headers, 
+    json=payload, <span class="cmt"># requests 會自動將字典轉換為 JSON 字串</span>
+    auth=(<span class="str">'admin'</span>, <span class="str">'secret'</span>), 
+    verify=<span class="kw">False</span>
+)
+
+<span class="cmt"># RESTconf 建立成功通常回傳 201 Created 或 204 No Content</span>
+<span class="kw">print</span>(<span class="str">"API 回應狀態碼："</span>, response.status_code)
+<span class="kw">if</span> response.status_code <span class="kw">in</span> [<span class="num">200</span>, <span class="num">201</span>, <span class="num">204</span>]:
+    <span class="kw">print</span>(<span class="str">"✅ 透過 API 成功建立 VLAN 100！"</span>)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"❌ 建立失敗："</span>, response.text)</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 解析巢狀 JSON 資料：萃取特定介面與 IP 狀態</h2>
+        <p>API 回傳的 JSON 通常結構很深（充滿巢狀字典與列表）。此範例教您如何使用 Python 精準剝開層層字典，抓出每個網路介面的名稱與 IP。</p>
+
+        <div class="file-header">api_parse_json.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+<span class="cmt"># 模擬 API 回傳的介面巢狀 JSON 資料結構</span>
+mock_api_response = {
+    <span class="str">"ietf-interfaces:interfaces"</span>: {
+        <span class="str">"interface"</span>: [
+            {<span class="str">"name"</span>: <span class="str">"GigabitEthernet1"</span>, <span class="str">"enabled"</span>: <span class="kw">True</span>, <span class="str">"ipv4"</span>: {<span class="str">"ip"</span>: <span class="str">"192.168.1.1"</span>}},
+            {<span class="str">"name"</span>: <span class="str">"GigabitEthernet2"</span>, <span class="str">"enabled"</span>: <span class="kw">False</span>, <span class="str">"ipv4"</span>: {<span class="str">"ip"</span>: <span class="str">"10.0.0.1"</span>}}
+        ]
+    }
+}
+
+interfaces = mock_api_response.get(<span class="str">"ietf-interfaces:interfaces"</span>, {}).get(<span class="str">"interface"</span>, [])
+
+<span class="kw">print</span>(f<span class="str">"{'介面名稱':&lt;20} | {'啟用狀態':&lt;10} | {'IP 位址':&lt;15}"</span>)
+<span class="kw">print</span>(<span class="str">"-"</span> * 50)
+
+<span class="kw">for</span> intf <span class="kw">in</span> interfaces:
+    name = intf.get(<span class="str">"name"</span>)
+    enabled = <span class="str">"UP"</span> <span class="kw">if</span> intf.get(<span class="str">"enabled"</span>) <span class="kw">else</span> <span class="str">"DOWN"</span>
+    ip = intf.get(<span class="str">"ipv4"</span>, {}).get(<span class="str">"ip"</span>, <span class="str">"N/A"</span>)
+    
+    <span class="kw">print</span>(f<span class="str">"{name:&lt;20} | {enabled:&lt;10} | {ip:&lt;15}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 完善的錯誤處理與 HTTP 狀態碼檢測</h2>
+        <p>呼叫 API 時可能遇到伺服器逾時、帳密錯誤 (401) 或找不到資源 (404)。我們必須使用 <code>try-except</code> 與 <code>response.raise_for_status()</code> 來確保程式穩定。</p>
+
+        <div class="file-header">api_error_handling.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+api_url = <span class="str">"https://192.168.1.1/restconf/data/non-existent-path"</span>
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(<span class="str">"正在發送 API 請求..."</span>)
+    response = requests.get(
+        api_url, 
+        auth=(<span class="str">'admin'</span>, <span class="str">'wrong_password'</span>), 
+        verify=<span class="kw">False</span>, 
+        timeout=<span class="num">3</span>
+    )
+    
+    <span class="cmt"># 若 HTTP 狀態碼為 4xx 或 5xx，會自動引發 HTTPError 例外</span>
+    response.raise_for_status()
+    
+    <span class="kw">print</span>(<span class="str">"成功："</span>, response.json())
+
+<span class="kw">except</span> requests.exceptions.HTTPError <span class="kw">as</span> err:
+    <span class="kw">print</span>(f<span class="str">"🚨 HTTP 錯誤發生：{err} (狀態碼: {err.response.status_code})"</span>)
+    <span class="kw">if</span> err.response.status_code == <span class="num">401</span>:
+        <span class="kw">print</span>(<span class="str">"🔒 提示：帳號或密碼驗證失敗。"</span>)
+    <span class="kw">elif</span> err.response.status_code == <span class="num">404</span>:
+        <span class="kw">print</span>(<span class="str">"🔍 提示：找不到指定的 API 資源路徑。"</span>)
+<span class="kw">except</span> requests.exceptions.Timeout:
+    <span class="kw">print</span>(<span class="str">"⏱️ 錯誤：API 連線逾時，設備可能離線或網路不通。"</span>)
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="kw">print</span>(f<span class="str">"⚠️ 未預期的錯誤：{e}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 實戰整合：串接 IPAM 系統 (NetBox API) 查詢子網段 IP</h2>
+        <p>現代網管常整合 IPAM (IP Address Management) 系統來管理 IP。此範例示範如何透過標準 REST API 查詢 NetBox 系統中的 IP 分配狀況。</p>
+
+        <div class="file-header">api_netbox_integration.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> json
+
+<span class="cmt># 企業內部 NetBox IPAM 系統 API 網址與權杖 (Token)</span>
+netbox_url = <span class="str">"https://netbox.corporate.local/api/ipam/ip-addresses/"</span>
+headers = {
+    <span class="str">"Authorization"</span>: <span class="str">"Token 0123456789abcdef0123456789abcdef01234567"</span>,
+    <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>
+}
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(<span class="str">"正在向 NetBox IPAM 系統查詢 IP 分配表..."</span>)
+    response = requests.get(netbox_url, headers=headers, verify=<span class="kw">False</span>, timeout=<span class="num">5</span>)
+    
+    <span class="kw">if</span> response.status_code == <span class="num">200</span>:
+        result = response.json()
+        ip_list = result.get(<span class="str">"results"</span>, [])
+        
+        <span class="kw">print</span>(f<span class="str">"=== 成功取得 IPAM 紀錄 (共 {result.get('count')} 筆) ==="</span>)
+        <span class="kw">for</span> ip_obj <span class="kw">in</span> ip_list:
+            address = ip_obj.get(<span class="str">"address"</span>)
+            status = ip_obj.get(<span class="str">"status"</span>, {}).get(<span class="str">"label"</span>)
+            tenant = ip_obj.get(<span class="str">"tenant"</span>)
+            tenant_name = tenant.get(<span class="str">"name"</span>) <span class="kw">if</span> tenant <span class="kw">else</span> <span class="str">"未指派"</span>
+            
+            <span class="kw">print</span>(f<span class="str">"IP: {address:<span class="str">&lt;18</span>} | 狀態: {status:<span class="str">&lt;10</span>} | 單位: {tenant_name}"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(f<span class="str">"查詢 IPAM 失敗，狀態碼：{response.status_code}"</span>)
+
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="kw">print</span>(f<span class="str">"無法連線至 NetBox 系統：{e}"</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

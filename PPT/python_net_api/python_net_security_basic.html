@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路安全監控自動化基礎教學：6 大資安與巡檢實戰</title>
+    <style>
+        :root {
+            --primary-color: #064e3b; /* Deep Emerald */
+            --secondary-color: #059669; /* Emerald Green */
+            --accent-color: #38bdf8; /* Light Blue */
+            --bg-color: #f0fdf4;
+            --text-color: #065f46;
+            --code-bg: #111827;
+            --code-color: #34d399;
+            --border-color: #a7f3d0;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--primary-color); border-bottom: 2px solid var(--secondary-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: var(--primary-color); margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #d1fae5; color: #065f46; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid #a7f3d0; }
+        .file-header { background-color: #111827; color: #9ca3af; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border-bottom: 1px solid #374151; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; }
+        code { background-color: #e6f4ea; color: #047857; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #f472b6; font-weight: bold; } /* keyword */
+        .str { color: #34d399; } /* string */
+        .cmt { color: #9ca3af; font-style: italic; } /* comment */
+        .fn { color: #60a5fa; } /* function */
+        .cls { color: #fbbf24; font-style: italic; } /* class */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路安全監控自動化基礎教學</h1>
+    <p>資安防護的第一步：設備連線安全檢查、連線狀態監控與密碼強度審核 6 大入門實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>網路安全監控自動化環境準備：</strong><br>
+        網路安全不只需要防火牆，更需要定期對企業內部的路由器、交換器進行「資安合規檢查 (Compliance Audit)」與「異常連線監控」。<br><br>
+        基礎篇我們將使用 Python 結合 <code>netmiko</code> 與基礎網管模組，檢查裝置的安全性設定。<br>
+        請在終端機安裝：<code>pip install netmiko napalm requests</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 自動檢查設備是否強制啟用密碼加密 (Service Password-Encryption)</h2>
+        <p>在 Cisco 設備中，若未開啟 `service password-encryption`，明文密碼會直接暴露在 `running-config` 之中。此範例教您自動巡檢全網設備是否有落實此項資安基本要求。</p>
+        
+        <div class="file-header">audit_password_encryption.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> conn:
+    output = conn.send_command(<span class="str">'show running-config | include password-encryption'</span>)
+    
+    <span class="kw">if</span> <span class="str">'service password-encryption'</span> <span class="kw">in</span> output:
+        <span class="kw">print</span>(<span class="str">"✅ [安全] 此設備已啟用密碼加密保護。"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(<span class="str">"⚠️ [資安警告] 此設備未啟用 service password-encryption！密碼可能以明文外洩。"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 檢查高風險通訊埠：偵測 Telnet 是否意外開啟</h2>
+        <p>Telnet 是明文傳輸協定，極易遭到中間人攻擊 (MitM)。資安規範要求所有設備必須全面關閉 Telnet，改用 SSH。此範例自動檢測 VTY 遠端線路設定。</p>
+
+        <div class="file-header">audit_vty_telnet.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> conn:
+    <span class="cmt"># 檢查 VTY 線路允許的輸人生協定</span>
+    output = conn.send_command(<span class="str">'show running-config | section line vty'</span>)
+    
+    <span class="kw">if</span> <span class="str">'transport input ssh'</span> <span class="kw">in</span> output <span class="kw">and</span> <span class="str">'telnet'</span> <span class="kw">not in</span> output:
+        <span class="kw">print</span>(<span class="str">"✅ [安全] VTY 遠端線路僅允許 SSH 登入。"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(<span class="str">"🚨 [嚴重資安漏洞] VTY 線路允許 Telnet 登入，請立即修正！"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 監控異常存取：自動備份與檢查 AAA 認證設定</h2>
+        <p>企業級網路安全要求透過 AAA (TACACS+ / RADIUS) 伺服器集中管理帳號，而非使用本機帳號。此範例自動稽核設備是否正確套用 AAA 登入驗證。</p>
+
+        <div class="file-header">audit_aaa_settings.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> conn:
+    output = conn.send_command(<span class="str">'show running-config | include aaa new-model'</span>)
+    
+    <span class="kw">if</span> <span class="str">'aaa new-model'</span> <span class="kw">in</span> output:
+        <span class="kw">print</span>(<span class="str">"✅ [合規] 設備已啟用 AAA 模型。"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(<span class="str">"⚠️ [注意] 設備未啟用 AAA，目前依賴本機帳號驗證。"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 網路拓樸與介面安全：自動關閉未使用的介面 (Port Security 概念)</h2>
+        <p>資安防護中，長期未使用的連接埠若未關閉 (`shutdown`)，可能遭內部有心人士私接小路由器或攻擊。此範例自動尋找處於 `down` 狀態的介面。</p>
+
+        <div class="file-header">audit_unused_ports.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> conn:
+    <span class="cmt"># 使用 TextFSM 結構化解析介面狀態</span>
+    interfaces = conn.send_command(<span class="str">'show ip interface brief'</span>, use_textfsm=<span class="kw">True</span>)
+    
+    <span class="kw">print</span>(<span class="str">"=== 閒置介面安全稽核清單 ==="</span>)
+    <span class="kw">for</span> intf <span class="kw">in</span> interfaces:
+        <span class="kw">if</span> <span class="str">'administratively down'</span> <span class="kw">in</span> intf[<span class="str">'status'</span>].lower():
+            <span class="kw">print</span>(f"  [安全] 介面 {intf['interface']} 已手動關閉。")
+        <span class="kw">elif</span> <span class="str">'down'</span> <span class="kw">in</span> intf[<span class="str">'status'</span>].lower():
+            <span class="kw">print</span>(f"  💡 [建議] 介面 {intf['interface']} 目前閒置 (down)，建議進行 shutdown 封鎖。")</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 即時安全告警：結合 Webhook 發送異常通知至 Chat (Slack / Teams)</h2>
+        <p>當自動化腳本巡檢到資安漏洞（如 Telnet 未關閉）時，不能只印在螢幕上，必須主動透過 HTTP Requests 發送 Webhook 告警至即時通訊軟體。</p>
+
+        <div class="file-header">security_webhook_alert.py</div>
+        <pre><code><span class="kw">import</span> requests
+
+<span class="kw">def</span> <span class="fn">send_security_alert</span>(message):
+    <span class="cmt"># 企業內部 Chat / Teams / Slack Webhook 網址</span>
+    webhook_url = <span class="str">"https://oapi.dingtalk.com/robot/send?access_token=YOUR_TOKEN_HERE"</span>
+    
+    payload = {
+        <span class="str">"msgtype"</span>: <span class="str">"text"</span>,
+        <span class="str">"text"</span>: {
+            <span class="str">"content"</span>: f<span class="str">"🚨 【網管資安告警】\n{message}"</span>
+        }
+    }
+    
+    response = requests.post(webhook_url, json=payload)
+    <span class="kw">if</span> response.status_code == 200:
+        <span class="kw">print</span>(<span class="str">"安全告警訊息已成功推播至即時通訊群組！"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(<span class="str">"告警發送失敗。"</span>)
+
+<span class="cmt"># 模擬觸發告警</span>
+send_security_alert(<span class="str">"偵測到核心交換器 192.168.1.1 關閉了 Port Security 檢查！"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 資安稽核報告自動生成：輸出 JSON 合規報表</h2>
+        <p>稽核單位要求定期提交資安合規證明。我們將前幾項檢查結果整理成 Python 字典，並一鍵匯出成標準的 JSON 資安稽核報告。</p>
+
+        <div class="file-header">generate_security_audit_report.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+<span class="kw">import</span> json
+<span class="kw">import</span> time
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+audit_report = {
+    <span class="str">'device_ip'</span>: device[<span class="str">'host'</span>],
+    <span class="str">'audit_time'</span>: time.strftime(<span class="str">'%Y-%m-%d %H:%M:%S'</span>),
+    <span class="str">'checks'</span>: {}
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> conn:
+    <span class="cmt># 1. 檢查密碼加密</span>
+    pwd_enc = conn.send_command(<span class="str">'show running-config | include password-encryption'</span>)
+    audit_report[<span class="str">'checks'</span>][<span class="str">'password_encryption'</span>] = <span class="str">'service password-encryption'</span> <span class="kw">in</span> pwd_enc
+    
+    <span class="cmt"># 2. 檢查 Telnet 漏洞</span>
+    vty_conf = conn.send_command(<span class="str">'show running-config | section line vty'</span>)
+    audit_report[<span class="str">'checks'</span>][<span class="str">'telnet_disabled'</span>] = <span class="str">'telnet'</span> <span class="kw">not in</span> vty_conf
+
+<span class="cmt"># 匯出為 JSON 格式報表</span>
+report_filename = f<span class="str">"security_audit_{device['host']}.json"</span>
+<span class="kw">with</span> open(report_filename, <span class="str">'w'</span>, encoding=<span class="str">'utf-8'</span>) <span class="kw">as</span> f:
+    json.dump(audit_report, f, indent=<span class="num">4</span>, ensure_ascii=<span class="kw">False</span>)
+
+<span class="kw">print</span>(f<span class="str">"資安合規 JSON 稽核報告已產出：{report_filename}"</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

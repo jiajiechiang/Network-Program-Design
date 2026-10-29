@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路 API 互動自動化中階教學：6 大進階 REST API 實戰</title>
+    <style>
+        :root {
+            --primary-color: #172554; /* Deep Blue */
+            --secondary-color: #2563eb; /* Royal Blue */
+            --accent-color: #38bdf8; /* Light Blue */
+            --bg-color: #020617;
+            --text-color: #f1f5f9;
+            --code-bg: #0f172a;
+            --code-color: #38bdf8;
+            --border-color: #1e293b;
+            --card-bg: #090d16;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--accent-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: #ffffff; margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #1e3a8a; color: #93c5fd; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid #1d4ed8; }
+        .file-header { background-color: #010409; color: #38bdf8; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border: 1px solid var(--border-color); border-bottom: none; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; border: 1px solid var(--border-color); }
+        code { background-color: #1e293b; color: #f43f5e; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; border: none; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #f43f5e; font-weight: bold; } /* keyword */
+        .str { color: #34d399; } /* string */
+        .cmt { color: #64748b; font-style: italic; } /* comment */
+        .fn { color: #60a5fa; } /* function */
+        .cls { color: #fbbf24; font-style: italic; } /* class */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路 API 互動自動化中階教學</h1>
+    <p>架構升級：Bearer Token 認證、RESTCONF 完整 CRUD、GraphQL 網路查詢、非同步 API 請求與網管 Webhook 接收實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>中階 API 自動化環境準備：</strong><br>
+        中階篇我們將跳脫簡單的 Basic Auth 查詢，深入企業級 API 互動架構：<br>
+        1. <strong>Token 認證機制</strong>：使用 Bearer Token 或 OAuth 進行安全授權。<br>
+        2. <strong>RESTCONF 完整 CRUD</strong>：實作透過 PATCH 與 DELETE 修改及刪除設備設定。<br>
+        3. <strong>GraphQL 與非同步請求</strong>：使用現代化 GraphQL 查詢網路拓樸，並透過 <code>asyncio</code> 併發大量 API 請求。<br><br>
+        請在終端機安裝套件：<code>pip install requests aiohttp httpx</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> Bearer Token 身份驗證：存取現代控制器 (如 Cisco DNA Center / Catalyst Center)</h2>
+        <p>現代網管控制器 (如 DNAC) 通常採用 Token 機制。我們必須先發送 POST 請求換取 Token，之後的每一個 API 請求都必須在 Headers 帶上 <code>Authorization: Bearer &lt;token&gt;</code>。</p>
+        
+        <div class="file-header">api_bearer_token.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+controller_url = <span class="str">"https://dnac.corporate.local"</span>
+
+<span class="cmt"># 1. 發送 POST 請求換取 Token</span>
+auth_url = f<span class="str">"{controller_url}/api/v1/auth/token"</span>
+response = requests.post(auth_url, auth=(<span class="str">'api_user'</span>, <span class="str">'password123'</span>), verify=<span class="kw">False</span>)
+
+<span class="kw">if</span> response.status_code == <span class="num">200</span>:
+    token = response.json().get(<span class="str">'Token'</span>)
+    <span class="kw">print</span>(<span class="str">"✅ 成功取得 Bearer Token！"</span>)
+    
+    <span class="cmt"># 2. 使用取得的 Token 訪問受保護的網路設備清單 API</span>
+    headers = {
+        <span class="str">"Authorization"</span>: f<span class="str">"Bearer {token}"</span>,
+        <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>
+    }
+    
+    devices_url = f<span class="str">"{controller_url}/api/v1/network-device"</span>
+    dev_response = requests.get(devices_url, headers=headers, verify=<span class="kw">False</span>)
+    
+    <span class="kw">print</span>(<span class="str">"網路設備清單查詢結果："</span>, dev_response.json())
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"❌ Token 取得失敗："</span>, response.status_code)</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> RESTCONF PATCH 請求：精準修改網路設備特定參數</h2>
+        <p>使用 POST 會覆蓋整個節點，而 <strong>PATCH</strong> 允許我們對設備設定進行「局部更新 (Partial Update)」。此範例示範透過 PATCH 修改特定介面的描述 (Description)。</p>
+
+        <div class="file-header">api_restconf_patch.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+<span class="cmt"># 目標特定介面的 RESTCONF 網址</span>
+api_url = <span class="str">"https://192.168.1.1/restconf/data/ietf-interfaces:interfaces/interface=GigabitEthernet1"</span>
+
+headers = {
+    <span class="str">"Accept"</span>: <span class="str">"application/yang-data+json"</span>,
+    <span class="str">"Content-Type"</span>: <span class="str">"application/yang-data+json"</span>
+}
+
+<span class="cmt"># 僅修改描述欄位，其餘設定保持不變</span>
+payload = {
+    <span class="str">"ietf-interfaces:interface"</span>: [
+        {
+            <span class="str">"name"</span>: <span class="str">"GigabitEthernet1"</span>,
+            <span class="str">"description"</span>: <span class="str">"Updated via RESTCONF PATCH by Python"</span>
+        }
+    ]
+}
+
+response = requests.patch(
+    api_url, 
+    headers=headers, 
+    json=payload, 
+    auth=(<span class="str">'admin'</span>, <span class="str">'secret'</span>), 
+    verify=<span class="kw">False</span>
+)
+
+<span class="kw">print</span>(<span class="str">"PATCH 回應狀態碼："</span>, response.status_code)
+<span class="kw">if</span> response.status_code <span class="kw">in</span> [<span class="num">200</span>, <span class="num">204</span>]:
+    <span class="kw">print</span>(<span class="str">"✅ 成功局部更新介面描述！"</span>)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"❌ 更新失敗："</span>, response.text)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> RESTCONF DELETE 請求：透過 API 自動刪除設定</h2>
+        <p>當業務下線或 VLAN 需移除時，我們可以使用 <strong>DELETE</strong> 請求精準刪除設備上的特定設定節點。</p>
+
+        <div class="file-header">api_restconf_delete.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+<span class="cmt"># 指定要刪除的特定 VLAN 100 網址</span>
+api_url = <span class="str">"https://192.168.1.1/restconf/data/Cisco-IOS-XE-native:native/vlan/vlan-list=100"</span>
+
+headers = {
+    <span class="str">"Accept"</span>: <span class="str">"application/yang-data+json"</span>
+}
+
+response = requests.delete(
+    api_url, 
+    headers=headers, 
+    auth=(<span class="str">'admin'</span>, <span class="str">'secret'</span>), 
+    verify=<span class="kw">False</span>
+)
+
+<span class="kw">print</span>(<span class="str">"DELETE 回應狀態碼："</span>, response.status_code)
+<span class="kw">if</span> response.status_code <span class="kw">in</span> [<span class="num">200</span>, <span class="num">204</span>]:
+    <span class="kw">print</span>(<span class="str">"✅ 成功透過 API 刪除 VLAN 100！"</span>)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"❌ 刪除失敗或該 VLAN 不存在："</span>, response.text)</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> GraphQL 網路查詢：向現代網管系統發送精準查詢</h2>
+        <p>傳統 REST API 常常會回傳一堆不需要的欄位。現代網管系統 (如 NetBox) 支援 <strong>GraphQL</strong>，讓您可以像點菜一樣，精準指定您想要的欄位與結構。</p>
+
+        <div class="file-header">api_graphql_query.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> json
+
+graphql_url = <span class="str">"https://netbox.corporate.local/graphql/"</span>
+headers = {
+    <span class="str">"Authorization"</span>: <span class="str">"Token 0123456789abcdef0123456789abcdef01234567"</span>,
+    <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>
+}
+
+<span class="cmt"># 定義 GraphQL 查詢語法：只要查詢設備名稱與其介面清單</span>
+query_payload = {
+    <span class="str">"query"</span>: <span class="str">"""
+        {
+          device_list {
+            name
+            site { name }
+            interfaces {
+              name
+              enabled
+            }
+          }
+        }
+    """</span>
+}
+
+response = requests.post(graphql_url, headers=headers, json=query_payload, verify=<span class="kw">False</span>)
+
+<span class="kw">if</span> response.status_code == <span class="num">200</span>:
+    result = response.json()
+    <span class="kw">print</span>(<span class="str">"=== GraphQL 精準查詢結果 ==="</span>)
+    <span class="kw">print</span>(json.dumps(result, indent=<span class="num">4</span>, ensure_ascii=<span class="kw">False</span>))
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"GraphQL 查詢失敗："</span>, response.text)</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 非同步 API 請求 (Asyncio + Httpx)：十倍速並發巡檢多台設備</h2>
+        <p>當需要同時向 50 台網路設備發送 REST API 查詢時，傳統同步 requests 會花費大量時間等待。透過 <code>httpx</code> 與 <code>asyncio</code> 實現非同步併發，秒級完成全網 API 巡檢。</p>
+
+        <div class="file-header">api_async_requests.py</div>
+        <pre><code><span class="kw">import</span> asyncio
+<span class="kw">import</span> httpx
+
+async <span class="kw">def</span> <span class="fn">fetch_device_status</span>(client, ip):
+    url = f<span class="str">"https://{ip}/restconf/data/ietf-system:system-state"</span>
+    <span class="kw">try</span>:
+        <span class="cmt"># 非同步發送 GET 請求</span>
+        response = await client.get(url, auth=(<span class="str">'admin'</span>, <span class="str">'secret'</span>), timeout=<span class="num">3</span>)
+        <span class="kw">if</span> response.status_code == <span class="num">200</span>:
+            <span class="kw">print</span>(f<span class="str">"✅ [{ip}] 查詢成功！"</span>)
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">print</span>(f<span class="str">"❌ [{ip}] 連線失敗: {e}"</span>)
+
+async <span class="kw">def</span> <span class="fn">main</span>():
+    devices = [f<span class="str">"192.168.1.{i}"</span> <span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">1</span>, <span class="num">11</span>)] <span class="cmt"># 模擬 10 台設備</span>
+    
+    <span class="cmt"># 建立非同步 HTTP Client (關閉 SSL 驗證)</span>
+    async <span class="kw">with</span> httpx.AsyncClient(verify=<span class="kw">False</span>) <span class="kw">as</span> client:
+        tasks = [fetch_device_status(client, ip) <span class="kw">for</span> ip <span class="kw">in</span> devices]
+        <span class="cmt"># 同時發出所有請求</span>
+        await asyncio.gather(*tasks)
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    asyncio.run(main())</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 網管自動化架構：編寫 Flask 接收設備 Webhook 事件</h2>
+        <p>現代網路設備支援事件驅動 (Event-driven) 自動化。當設備發生介面斷線或設定變更時，會主動發送 HTTP POST 到我們的伺服器。此範例教您用 Flask 接收並處理來自設備的 Webhook。</p>
+
+        <div class="file-header">api_webhook_receiver.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, jsonify
+
+app = Flask(__name__)
+
+<span class="dec">@app.route</span>(<span class="str">'/api/v1/webhook/network-event'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">receive_network_webhook</span>():
+    event_data = request.json
+    
+    <span class="kw">if not</span> event_data:
+        <span class="kw">return</span> jsonify({<span class="str">"error"</span>: <span class="str">"Invalid JSON payload"</span>}), <span class="num">400</span>
+        
+    <span class="cmt"># 解析設備主動推播的事件內容</span>
+    device_ip = event_data.get(<span class="str">'device_ip'</span>)
+    event_type = event_data.get(<span class="str">'event_type'</span>)
+    message = event_data.get(<span class="str">'message'</span>)
+    
+    <span class="kw">print</span>(f<span class="str">"🚨 [收到設備 Webhook 事件] 來自: {device_ip} | 類型: {event_type} | 內容: {message}"</span>)
+    
+    <span class="cmt"># 這裡可以自動串接邏輯 (例如發送 Line/Teams 告警或觸發備份)</span>
+    
+    <span class="kw">return</span> jsonify({<span class="str">"status"</span>: <span class="str">"success"</span>, <span class="str">"message"</span>: <span class="str">"Event received and processed."</span>}), <span class="num">200</span>
+
+<span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:
+    <span class="cmt"># 啟動 Webhook 接收伺服器</span>
+    app.run(host=<span class="str">'0.0.0.0'</span>, port=<span class="num">5000</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

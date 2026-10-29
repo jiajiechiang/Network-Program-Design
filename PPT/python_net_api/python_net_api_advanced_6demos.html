@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路 API 互動自動化高階教學：6 大企業級架構魔王實戰</title>
+    <style>
+        :root {
+            --primary-color: #030712; /* Deep Slate */
+            --secondary-color: #4f46e5; /* Indigo */
+            --accent-color: #06b6d4; /* Cyan */
+            --bg-color: #020617;
+            --text-color: #f1f5f9;
+            --code-bg: #0f172a;
+            --code-color: #38bdf8;
+            --border-color: #1e293b;
+            --card-bg: #090d16;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--accent-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: #ffffff; margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #1e1b4b; color: #c7d2fe; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid #3730a3; }
+        .file-header { background-color: #010409; color: #38bdf8; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border: 1px solid var(--border-color); border-bottom: none; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; border: 1px solid var(--border-color); }
+        code { background-color: #1e293b; color: #f43f5e; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; border: none; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #f43f5e; font-weight: bold; } /* keyword */
+        .str { color: #34d399; } /* string */
+        .cmt { color: #64748b; font-style: italic; } /* comment */
+        .fn { color: #60a5fa; } /* function */
+        .cls { color: #fbbf24; font-style: italic; } /* class */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路 API 互動自動化高階教學</h1>
+    <p>企業級架構：gRPC 高效能遠端程序呼叫、NETCONF (YANG 模型) 交易式配置、OAuth 2.0 自動續期、多網段網管微服務與非同步並發管理 6 大實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>高階 API 自動化環境準備：</strong><br>
+        在高階自動化架構中，我們將跨越傳統 REST API 的限制，挑戰電信級與超大規模資料中心採用的頂級通訊協定：<br>
+        1. <strong>gRPC 與 Protocol Buffers</strong>：支援二進位傳輸，速度比 JSON 快數倍的現代化遠端程序呼叫。<br>
+        2. <strong>NETCONF 與 YANG 數據模型</strong>：具備 ACID 交易保證 (Commit / Rollback) 的網路組態協定。<br>
+        3. <strong>OAuth 2.0 自动续期與多執行緒微服務</strong>。<br><br>
+        請在終端機安裝套件：<code>pip install ncclient grpcio grpcio-tools requests</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 企業級 NETCONF 協定：透過 ncclient 取得設備 YANG 模型狀態</h2>
+        <p><strong>NETCONF</strong> (Network Configuration Protocol) 是運行在 SSH 之上的 XML 協定，透過 YANG 數據模型提供強大且結構化的網路設備管理能力。</p>
+        
+        <div class="file-header">netconf_get_capabilities.py</div>
+        <pre><code><span class="kw">from</span> ncclient <span class="kw">import</span> manager
+<span class="kw">import</span> sys
+
+device_params = {
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'port'</span>: <span class="num">830</span>,  <span class="cmt"># NETCONF 預設 Port</span>
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>,
+    <span class="str">'hostkey_verify'</span>: <span class="kw">False</span>
+}
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(<span class="str">"正在透過 NETCONF 連線至設備..."</span>)
+    <span class="kw">with</span> manager.connect(**device_params) <span class="kw">as</span> m:
+        <span class="kw">print</span>(<span class="str">"✅ NETCONF 連線成功！支援的 YANG 模型能力 (Capabilities)："</span>)
+        <span class="kw">for</span> capability <span class="kw">in</span> m.server_capabilities:
+            <span class="kw">if</span> <span class="str">'yang'</span> <span class="kw">in</span> capability.lower():
+                <span class="kw">print</span>(f<span class="str">"  - {capability}"</span>)
+                
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="kw">print</span>(f<span class="str">"NETCONF 連線失敗：{e}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> NETCONF 交易式組態派發：具備 Commit 與 Rollback 機制的設定</h2>
+        <p>NAPALM 的 Rollback 是事後還原，而 NETCONF 支援內建的 <strong>ACID 交易保證</strong>。您可以將設定推送到 candidate 資料庫，測試無誤後才 Commit，若連線中斷會自動回滾。</p>
+
+        <div class="file-header">netconf_transaction_config.py</div>
+        <pre><code><span class="kw">from</span> ncclient <span class="kw">import</span> manager
+
+device_params = {
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'port'</span>: <span class="num">830</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>,
+    <span class="str">'hostkey_verify'</span>: <span class="kw">False</span>
+}
+
+<span class="cmt"># 準備標準的 XML 設定檔內容 (以 YANG 介面為例)</span>
+config_xml = <span class="str">"""
+<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+    <interface>
+      <name>Loopback100</name>
+      <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:softwareLoopback</type>
+      <enabled>true</enabled>
+    </interface>
+  </interfaces>
+</config>
+"""</span>
+
+<span class="kw">with</span> manager.connect(**device_params) <span class="kw">as</span> m:
+    <span class="kw">try</span>:
+        <span class="cmt"># 鎖定 running 資料庫，防止其他人同時修改</span>
+        m.lock(target=<span class="str">'candidate'</span>)
+        
+        <span class="cmt"># 將設定推送至 candidate</span>
+        m.edit_config(target=<span class="str">'candidate'</span>, config=config_xml)
+        <span class="kw">print</span>(<span class="str">"設定已推送至候選區 (Candidate)，正在進行交易提交..."</span>)
+        
+        <span class="cmt"># 提交設定 (Commit)</span>
+        m.commit()
+        <span class="kw">print</span>(<span class="str">"✅ NETCONF 交易提交成功！"</span>)
+        
+        m.unlock(target=<span class="str">'candidate'</span>)
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">print</span>(f<span class="str">"❌ 發生錯誤，自動執行 Rollback 回滾：{e}"</span>)
+        m.discard_changes()
+        m.unlock(target=<span class="str">'candidate'</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> gRPC 高效能遠端程序呼叫：串流式訂閱網路 telemetry 數據</h2>
+        <p>現代高密度資料中心使用 <strong>gRPC</strong> 取代傳統 Polling (輪詢)。透過 Protocol Buffers 二進位序列化，設備可以實時將介面流量「主動串流 (Streaming)」推送到網管伺服器。</p>
+
+        <div class="file-header">grpc_telemetry_client.py</div>
+        <pre><code><span class="kw">import</span> grpc
+<span class="cmt"># 假設已透過 proto 檔案產生成品的 gRPC 模組</span>
+<span class="cmt># import telemetry_pb2</span>
+<span class="cmt># import telemetry_pb2_grpc</span>
+
+<span class="kw">def</span> <span class="fn">run_grpc_telemetry_client</span>():
+    server_address = <span class="str">'192.168.1.1:57400'</span>
+    
+    <span class="kw">print</span>(f<span class="str">"正在建立 gRPC 安全通道連線至 {server_address}..."</span>)
+    <span class="cmt"># 建立 gRPC Channel</span>
+    <span class="kw">with</span> grpc.insecure_channel(server_address) <span class="kw">as</span> channel:
+        <span class="cmt># stub = telemetry_pb2_grpc.TelemetryStub(channel)</span>
+        <span class="cmt># 訂閱介面流量串流 (Stream)</span>
+        <span class="cmt># response_iterator = stub.GetTelemetry(telemetry_pb2.SubscriptionRequest(path="Cisco-IOS-XE-native:native/interface"))</span>
+        <span class="cmt># for telemetry_data in response_iterator:</span>
+        <span class="cmt>#     print("即時流量數據:", telemetry_data)</span>
+        <span class="kw">pass</span>
+
+<span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:
+    <span class="kw">print</span>(<span class="str">"gRPC Telemetry 訂閱客戶端框架就緒。"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> OAuth 2.0 自動續期機制：管理具備時效性的雲端網管 API</h2>
+        <p>當串接現代雲端網管平台 (如 Cisco Meraki Dashboard API 或 AWS VPC API) 時，Token 通常在 1 小時內就會過期。此範例教您寫一個具備「自動偵測過期並重新換取 Token」的智能 API 請求封裝類別。</p>
+
+        <div class="file-header">oauth_auto_refresh_client.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> time
+
+<span class="kw">class</span> <span class="cls">SmartCloudAPIClient</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, token_url, client_id, client_secret):
+        self.token_url = token_url
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.access_token = <span class="kw">None</span>
+        self.token_expiry = <span class="num">0</span>
+        
+    <span class="kw">def</span> <span class="fn">_refresh_token(self):</span>
+        <span class="kw">print</span>(<span class="str">"🔄 偵測到 OAuth 2.0 Token 已過期或尚未取得，正在重新換取..."</span>)
+        response = requests.post(self.token_url, data={
+            <span class="str">'grant_type'</span>: <span class="str">'client_credentials'</span>,
+            <span class="str">'client_id'</span>: self.client_id,
+            <span class="str">'client_secret'</span>: self.client_secret
+        })
+        <span class="kw">if</span> response.status_code == <span class="num">200</span>:
+            data = response.json()
+            self.access_token = data.get(<span class="str">'access_token'</span>)
+            <span class="cmt"># 設定過期時間 (假設有效期間 3600 秒，提前 60 秒刷新)</span>
+            self.token_expiry = time.time() + data.get(<span class="str">'expires_in'</span>, <span class="num">3600</span>) - <span class="num">60</span>
+            <span class="kw">print</span>(<span class="str">"✅ 成功刷新 OAuth Token！"</span>)
+        <span class="kw">else</span>:
+            <span class="kw">raise</span> Exception(f<span class="str">"Token 換取失敗: {response.text}"</span>)
+            
+    <span class="kw">def</span> <span class="fn">get_resource</span>(self, api_endpoint):
+        <span class="cmt"># 若 Token 過期或不存在，自動觸發刷新</span>
+        <span class="kw">if</span> <span class="kw">not</span> self.access_token <span class="kw">or</span> time.time() &gt;= self.token_expiry:
+            self._refresh_token()
+            
+        headers = {<span class="str">'Authorization'</span>: f<span class="str">'Bearer {self.access_token}'</span>}
+        <span class="kw">return</span> requests.get(api_endpoint, headers=headers)
+
+<span class="cmt"># 實例化使用範例</span>
+<span class="cmt># client = SmartCloudAPIClient("https://auth.cloud.net/oauth/token", "my_id", "my_secret")</span>
+<span class="cmt># res = client.get_resource("https://api.cloud.net/v1/networks")</span></code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 網管微服務架構：編寫自動化 API 網關 (API Gateway)</h2>
+        <p>在大型企業中，我們常需要建立一個統一的 Python API 網關，將不同廠牌設備的底層 API 封裝成統一格式，供內部前端或維運系統呼叫。</p>
+
+        <div class="file-header">network_api_gateway.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, jsonify
+<span class="kw">import</span> requests
+
+app = Flask(__name__)
+
+<span class="cmt"># 企業內部統一網管 API 網關</span>
+<span class="dec">@app.route</span>(<span class="str">'/gateway/device/vlan'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">gateway_create_vlan</span>():
+    req_data = request.json
+    target_router_ip = req_data.get(<span class="str">'ip'</span>)
+    vlan_id = req_data.get(<span class="str">'vlan_id'</span>)
+    vlan_name = req_data.get(<span class="str">'vlan_name'</span>)
+    
+    <span class="kw">print</span>(f<span class="str">"🌐 [API Gateway] 收到來自前端的統一請求：在 {target_router_ip} 建立 VLAN {vlan_id}"</span>)
+    
+    <span class="cmt"># 網關在背景將其轉譯為設備看得懂的 RESTCONF 請求</span>
+    device_restconf_url = f<span class="str">"https://{target_router_ip}/restconf/data/Cisco-IOS-XE-native:native/vlan"</span>
+    payload = {
+        <span class="str">"Cisco-IOS-XE-native:vlan-list"</span>: [{<span class="str">"id"</span>: vlan_id, <span class="str">"name"</span>: vlan_name}]
+    }
+    
+    <span class="kw">try</span>:
+        res = requests.post(
+            device_restconf_url, 
+            json=payload, 
+            headers={<span class="str">"Content-Type"</span>: <span class="str">"application/yang-data+json"</span>},
+            auth=(<span class="str">'admin'</span>, <span class="str">'secret'</span>), 
+            verify=<span class="kw">False</span>, 
+            timeout=<span class="num">5</span>
+        )
+        <span class="kw">return</span> jsonify({
+            <span class="str">"gateway_status"</span>: <span class="str">"success"</span>,
+            <span class="str">"device_response_code"</span>: res.status_code,
+            <span class="str">"message"</span>: f<span class="str">"VLAN {vlan_id} 已透過網關成功派發！"</span>
+        }), <span class="num">200</span>
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">return</span> jsonify({<span class="str">"gateway_status"</span>: <span class="str">"error"</span>, <span class="str">"message"</span>: str(e)}), <span class="num">500</span>
+
+<span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:
+    app.run(host=<span class="str">'0.0.0.0'</span>, port=<span class="num">8000</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 分散式 API 任務隊列：結合 Celery 與 REST API 實現非同步異動</h2>
+        <p>當透過 API 異動全網 500 台交換器設定時，若在 HTTP 請求中同步等待會導致連線逾時。高階架構必須結合 <strong>Celery + Redis</strong>，將 API 異動請求轉為背景非同步任務處理。</p>
+
+        <div class="file-header">celery_api_tasks.py</div>
+        <pre><code><span class="kw">from</span> celery <span class="kw">import</span> Celery
+<span class="kw">import</span> requests
+<span class="kw">import</span> urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+celery_app = Celery(
+    <span class="str">'net_api_tasks'</span>,
+    broker=<span class="str">'redis://localhost:6379/0'</span>,
+    backend=<span class="str">'redis://localhost:6379/0'</span>
+)
+
+<span class="dec">@celery_app.task</span>
+<span class="kw">def</span> <span class="fn">async_push_restconf_config</span>(device_ip, payload):
+    <span class="kw">print</span>(f<span class="str">"🚀 [Celery Worker] 開始非同步推送設定至設備 {device_ip}..."</span>)
+    url = f<span class="str">"https://{device_ip}/restconf/data/ietf-interfaces:interfaces"</span>
+    
+    <span class="kw">try</span>:
+        response = requests.patch(
+            url, 
+            json=payload, 
+            headers={<span class="str">"Content-Type"</span>: <span class="str">"application/yang-data+json"</span>},
+            auth=(<span class="str">'admin'</span>, <span class="str">'secret'</span>), 
+            verify=<span class="kw">False</span>,
+            timeout=<span class="num">10</span>
+        )
+        <span class="kw">print</span>(f<span class="str">"✅ 設備 {device_ip} 非同步 API 推送完成，狀態碼：{response.status_code}"</span>)
+        <span class="kw">return</span> response.status_code
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">print</span>(f<span class="str">"❌ 設備 {device_ip} 非同步推送異常：{e}"</span>)
+        <span class="kw">return</span> <span class="str">str</span>(e)
+
+<span class="cmt"># 於 Flask API 路由中觸發方式：</span>
+<span class="cmt># async_push_restconf_config.delay('192.168.1.1', payload)</span>
+<span class="cmt># 系統會毫秒級回應「任務已受理」，並在背景默默完成全網派發！</span></code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

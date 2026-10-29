@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路安全監控自動化進階教學：6 大資安防禦魔王實戰</title>
+    <style>
+        :root {
+            --primary-color: #030712; /* Dark Slate */
+            --secondary-color: #0d9488; /* Teal */
+            --accent-color: #f43f5e; /* Rose / Red alert */
+            --bg-color: #020617;
+            --text-color: #f1f5f9;
+            --code-bg: #0f172a;
+            --code-color: #38bdf8;
+            --border-color: #1e293b;
+            --card-bg: #090d16;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--secondary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: #ffffff; margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #042f2e; color: #5cc8ff; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid #115e59; }
+        .file-header { background-color: #010409; color: #38bdf8; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border: 1px solid var(--border-color); border-bottom: none; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; border: 1px solid var(--border-color); }
+        code { background-color: #1e293b; color: #f43f5e; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; border: none; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #f43f5e; font-weight: bold; } /* keyword */
+        .str { color: #34d399; } /* string */
+        .cmt { color: #64748b; font-style: italic; } /* comment */
+        .fn { color: #60a5fa; } /* function */
+        .cls { color: #fbbf24; font-style: italic; } /* class */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路安全監控自動化進階教學</h1>
+    <p>企業級資安架構：實時 Syslog 封包威脅解析、控制平面防禦 (CoPP) 稽核、TLS 憑證過期監控與多執行緒大量弱點掃描 6 大魔王實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>進階資安自動化環境準備：</strong><br>
+        進階篇我們將面對企業網路面臨的高級威脅與大規模資安稽核挑戰：<br>
+        1. <strong>實時日誌監控 (Syslog Server)</strong>：用 Python 接收設備即時 Syslog，第一時間攔截暴力破解 (Brute-force) 登入攻擊。<br>
+        2. <strong>控制平面防禦 (CoPP) 審核</strong>：防止路由器 CPU 遭到 DoS 攻擊癱瘓。<br>
+        3. <strong>併發資安掃描</strong>：結合 Nornir 同時對全網百台設備執行資安合規檢查。<br><br>
+        請在終端機安裝套件：<code>pip install netmiko napalm nornir cryptography requests</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 打造即時 Syslog 伺服器：攔截 SSH 暴力破解攻擊 (Brute-force)</h2>
+        <p>駭客常對設備發動 SSH 密碼猜解。我們可以使用 Python 的 Socket 撰寫一個輕量級 Syslog 監聽伺服器，當收到登入失敗日誌達一定次數時，自動觸發防禦機制。</p>
+        
+        <div class="file-header">syslog_security_monitor.py</div>
+        <pre><code><span class="kw">import</span> socket
+<span class="kw">import</span> re
+
+HOST = <span class="str">'0.0.0.0'</span>  <span class="cmt"># 監聽所有網卡</span>
+PORT = <span class="num">514</span>        <span class="cmt"># 標準 Syslog UDP Port (需管理員權限或改用 5140)</span>
+
+failed_attempts = {}
+
+<span class="kw">with</span> socket.socket(socket.AF_INET, socket.SOCK_DGRAM) <span class="kw">as</span> server:
+    server.bind((HOST, PORT))
+    <span class="kw">print</span>(f<span class="str">"🚨 網管即時 Syslog 監聽伺服器已啟動於 Port {PORT}..."</span>)
+    
+    <span class="kw">while True</span>:
+        data, addr = server.recvfrom(<span class="num">1024</span>)
+        log_message = data.decode(<span class="str">'utf-8'</span>, errors=<span class="str">'ignore'</span>)
+        
+        <span class="cmt"># 檢查是否為 Cisco 設備的 SSH 登入失敗日誌 (例如 %AUTH-4-FAIL 或 %SSH-5-FAILED)</span>
+        <span class="kw">if</span> <span class="str">'failed'</span> <span class="kw">in</span> log_message.lower() <span class="kw">or</span> <span class="str">'invalid'</span> <span class="kw">in</span> log_message.lower():
+            attacker_ip = addr[<span class="num">0</span>]
+            <span class="kw">print</span>(f<span class="str">"⚠️ [收到可疑日誌] 來源 IP: {attacker_ip} | 內容: {log_message.strip()}"</span>)
+            
+            <span class="cmt"># 計算攻擊次數</span>
+            failed_attempts[attacker_ip] = failed_attempts.get(attacker_ip, <span class="num">0</span>) + <span class="num">1</span>
+            
+            <span class="kw">if</span> failed_attempts[attacker_ip] &gt;= <span class="num">5</span>:
+                <span class="kw">print</span>(f<span class="str">"🚨 [安全警報] 偵測來自 {attacker_ip} 的持續暴力破解攻擊！準備發動防禦..."</span>)
+                <span class="cmt"># 這裡可自動串接 API 呼叫防火牆封鎖該 IP</span></code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 控制平面防禦 (CoPP) 稽核：防止路由器 CPU 遭 DoS 癱瘓</h2>
+        <p>核心路由器若未設定 CoPP (Control Plane Policing)，當遭到大量 Ping 或異常流量攻擊時，CPU 會飆高到 100% 導致整網斷線。此範例自動檢查設備是否套用 CoPP 防禦策略。</p>
+
+        <div class="file-header">audit_copp_policy.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> conn:
+    output = conn.send_command(<span class="str">'show running-config | include control-plane'</span>)
+    policy_output = conn.send_command(<span class="str">'show policy-map control-plane'</span>)
+    
+    <span class="kw">print</span>(<span class="str">"=== 控制平面防禦 (CoPP) 稽核報告 ==="</span>)
+    <span class="kw">if</span> <span class="str">'control-plane'</span> <span class="kw">in</span> output <span class="kw">and</span> policy_output.strip():
+        <span class="kw">print</span>(<span class="str">"✅ [安全] 設備已配置 Control Plane Policing (CoPP) 保護路由核心。"</span>)
+        <span class="kw">print</span>(policy_output[:<span class="num">300</span>])
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(<span class="str">"🚨 [嚴重資安隱患] 設備未啟用 CoPP！核心 CPU 暴露於 DoS 攻擊風險中。"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> SSL/TLS 憑證有效期限監控：防止設備管理介面憑證過期</h2>
+        <p>網管人員常因 HTTPS 管理介面的 SSL 憑證過期而無法安全登入。此範例透過 Python 自動連線至設備的 HTTPS 埠，檢查憑證剩餘有效天數，過期前自動發出警報。</p>
+
+        <div class="file-header">monitor_ssl_certificate.py</div>
+        <pre><code><span class="kw">import</span> socket
+<span class="kw">import</span> ssl
+<span class="kw">import</span> datetime
+
+HOST = <span class="str">'192.168.1.1'</span>
+PORT = <span class="num">443</span>
+
+context = ssl.create_default_context()
+context.check_hostname = <span class="kw">False</span>
+context.verify_mode = ssl.CERT_NONE <span class="cmt"># 略過自簽憑證驗證</span>
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(f<span class="str">"正在檢查 {HOST}:{PORT} 的 SSL 憑證效期..."</span>)
+    <span class="kw">with</span> socket.create_connection((HOST, PORT), timeout=<span class="num">5</span>) <span class="kw">as</span> sock:
+        <span class="kw">with</span> context.wrap_socket(sock, server_hostname=HOST) <span class="kw">as</span> ssock:
+            cert = ssock.getpeercert(binary_form=<span class="kw">True</span>)
+            
+            <span class="cmt"># 使用 cryptography 解析憑證過期時間</span>
+            <span class="kw">from</span> cryptography <span class="kw">import</span> x509
+            <span class="kw">from</span> cryptography.hazmat.backends <span class="kw">import</span> default_backend
+            
+            x509_cert = x509.load_der_x509_certificate(cert, default_backend())
+            expire_date = x509_cert.not_after_utc <span class="kw">if</span> hasattr(x509_cert, <span class="str">'not_after_utc'</span>) <span class="kw">else</span> x509_cert.not_after
+            
+            remaining_days = (expire_date.replace(tzinfo=<span class="kw">None</span>) - datetime.datetime.utcnow()).days
+            
+            <span class="kw">print</span>(f<span class="str">"📅 憑證有效期限至：{expire_date}"</span>)
+            <span class="kw">print</span>(f<span class="str">"⏳ 剩餘有效天數：{remaining_days} 天"</span>)
+            
+            <span class="kw">if</span> remaining_days &lt; <span class="num">30</span>:
+                <span class="kw">print</span>(<span class="str">"⚠️ [憑證警告] 剩餘有效天數不足 30 天，請儘速更新憑證！"</span>)
+            <span class="kw">else</span>:
+                <span class="kw">print</span>(<span class="str">"✅ 憑證效期正常。"</span>)
+                
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="kw">print</span>(f<span class="str">"無法取得 SSL 憑證：{e}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 路由表劫持防禦：自動監控 BGP 路由異動與異常路徑</h2>
+        <p>BGP 路由劫持 (BGP Hijacking) 是嚴重的網路資安事件。此範例透過 NAPALM 實時抓取 BGP 鄰居狀態與路由表，比對預期的白名單路徑，發現異常立刻通報。</p>
+
+        <div class="file-header">monitor_bgp_hijack.py</div>
+        <pre><code><span class="kw">from</span> napalm <span class="kw">import</span> get_network_driver
+
+driver = get_network_driver(<span class="str">'ios'</span>)
+device = driver(hostname=<span class="str">'192.168.1.1'</span>, username=<span class="str">'admin'</span>, password=<span class="str">'secret'</span>)
+device.open()
+
+<span class="cmt"># 取得當前 BGP 鄰居狀態</span>
+bgp_neighbors = device.get_bgp_neighbors()
+
+<span class="kw">print</span>(<span class="str">"=== BGP 鄰居安全監控 ==="</span>)
+<span class="kw">for</span> neighbor_ip, details <span class="kw">in</span> bgp_neighbors[<span class="str">'global'</span>][<span class="str">'peers'</span>].items():
+    is_up = details.get(<span class="str">'is_up'</span>)
+    uptime = details.get(<span class="str">'uptime'</span>)
+    
+    <span class="kw">if</span> is_up:
+        <span class="kw">print</span>(f<span class="str">"✅ BGP 鄰居 {neighbor_ip} 狀態正常 (Uptime: {uptime})"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(f<span class="str">"🚨 [嚴重警報] BGP 鄰居 {neighbor_ip} 已經斷線！可能遭受阻斷攻擊或路由表被竄改！"</span>)
+
+device.close()</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 跨網段多執行緒資安漏洞掃描 (Nornir + Netmiko)</h2>
+        <p>企業有數百台設備需要定期執行資安合規檢查。結合 Nornir 的多執行緒併發能力，瞬間對全網設備發動資安巡檢，幾秒鐘產出全公司資安紅黑榜。</p>
+
+        <div class="file-header">nornir_security_scanner.py</div>
+        <pre><code><span class="kw">from</span> nornir <span class="kw">import</span> InitNornir
+<span class="kw">from</span> nornir_netmiko.tasks <span class="kw">import</span> netmiko_send_command
+<span class="kw">from</span> nornir_utils.plugins.functions <span class="kw">import</span> print_result
+
+nr = InitNornir(config_file=<span class="str">"config.yaml"</span>)
+
+<span class="kw">def</span> <span class="fn">security_compliance_audit</span>(task):
+    <span class="cmt"># 檢查是否開啟 password-encryption 與 SNMP 預設字串</span>
+    res_enc = task.run(task=netmiko_send_command, command_string=<span class="str">"show running-config | include password-encryption"</span>)
+    res_snmp = task.run(task=netmiko_send_command, command_string=<span class="str">"show running-config | include snmp-server community"</span>)
+    
+    task.host[<span class="str">"audit_results"</span>] = {
+        <span class="str">"pwd_encryption"</span>: <span class="str">"service password-encryption"</span> <span class="kw">in</span> res_enc.result,
+        <span class="str">"default_snmp"</span>: <span class="str">"public"</span> <span class="kw">in</span> res_snmp.result <span class="kw">or</span> <span class="str">"private"</span> <span class="kw">in</span> res_snmp.result
+    }
+
+results = nr.run(task=security_compliance_audit)
+
+<span class="kw">for</span> host_name, host_obj <span class="kw">in</span> nr.inventory.hosts.items():
+    data = host_obj.get(<span class="str">"audit_results"</span>, {})
+    <span class="kw">print</span>(f<span class="str">"設備 [{host_name}] 稽核結果 -> 密碼加密: {data.get('pwd_encryption')} | 高危SNMP預設字串: {data.get('default_snmp')}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 資安事件自動阻斷：結合 Webhook 與防火牆 API 實時封鎖</h2>
+        <p>整合企業的資安防禦網。當 Python 監控腳本偵測到惡意 IP 或異常設備嘗試連線時，自動呼叫次世代防火牆 (如 Palo Alto / Fortinet) 的 REST API 將其加入黑名單，實現零秒反應的自動化防禦 (SOAR)。</p>
+
+        <div class="file-header">soar_auto_block.py</div>
+        <pre><code><span class="kw">import</span> requests
+
+<span class="kw">def</span> <span class="fn">block_malicious_ip_on_firewall</span>(malicious_ip):
+    <span class="cmt"># 模擬企業防火牆 (例如 Fortinet / Palo Alto) 的 REST API 接口</span>
+    firewall_api_url = <span class="str">"https://firewall.corporate.local/api/v2/firewall/address_block"</span>
+    
+    headers = {
+        <span class="str">"Authorization"</span>: <span class="str">"Bearer SECRET_API_TOKEN_XYZ"</span>,
+        <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>
+    }
+    
+    payload = {
+        <span class="str">"ip_address"</span>: malicious_ip,
+        <span class="str">"action"</span>: <span class="str">"drop"</span>,
+        <span class="str">"reason"</span>: <span class="str">"Auto-quarantined by Python SOAR Security Script"</span>
+    }
+    
+    <span class="kw">try</span>:
+        <span class="cmt"># 發送 API 請求封鎖該 IP</span>
+        response = requests.post(firewall_api_url, json=payload, verify=<span class="kw">False</span>, timeout=<span class="num">5</span>)
+        
+        <span class="kw">if</span> response.status_code == <span class="num">200</span>:
+            <span class="kw">print</span>(f<span class="str">"🛡️ [SOAR 自動防禦] 惡意 IP {malicious_ip} 已被防火牆即時封鎖！"</span>)
+        <span class="kw">else</span>:
+            <span class="kw">print</span>(f<span class="str">"⚠️ 防火牆 API 回應異常：{response.status_code}"</span>)
+            
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">print</span>(f<span class="str">"無法連線至防火牆 API：{e}"</span>)
+
+<span class="cmt"># 模擬攔截到攻擊來源</span>
+block_malicious_ip_on_firewall(<span class="str">'203.0.113.55'</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

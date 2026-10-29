@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路自動化進階教學：6 大網管實戰範例</title>
+    <style>
+        :root {
+            --primary-color: #0f172a; /* Slate Dark */
+            --secondary-color: #0ea5e9; /* Sky Blue */
+            --accent-color: #10b981; /* Emerald Green */
+            --bg-color: #090d16;
+            --text-color: #cbd5e1;
+            --code-bg: #1e293b;
+            --code-color: #e2e8f0;
+            --border-color: #334155;
+            --card-bg: #111827;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--secondary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #000; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: #ffffff; margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #172554; color: #93c5fd; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid #1e3a8a; }
+        .file-header { background-color: #020617; color: #94a3b8; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border: 1px solid var(--border-color); border-bottom: none; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; border: 1px solid var(--border-color); }
+        code { background-color: #334155; color: #f43f5e; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; border: none; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #38bdf8; font-weight: bold; } /* keyword */
+        .str { color: #34d399; } /* string */
+        .cmt { color: #64748b; font-style: italic; } /* comment */
+        .fn { color: #f472b6; } /* function */
+        .cls { color: #fbbf24; font-style: italic; } /* class */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路自動化進階教學</h1>
+    <p>現代網管利器：Netmiko 批次設定、NAPALM 跨廠牌整合與 Nornir 非同步併發實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>進階自動化環境準備：</strong><br>
+        傳統的 Paramiko 寫起來過於繁瑣。進階網管開發我們改用專門針對網路設備設計的高階套件：<br>
+        - <strong>Netmiko</strong>：簡化 SSH 連線，支援自動處理設備提示字元與分頁。<br>
+        - <strong>NAPALM</strong>：提供統一的 API (Getters/Config)，無論 Cisco、Juniper 都能用相同的語法抓取狀態。<br>
+        - <strong>Nornir</strong>：新一代的純 Python 自動化框架，原生支援多執行緒併發處理。<br><br>
+        請在終端機安裝套件：<code>pip install netmiko napalm nornir nornir-napalm nornir-netmiko</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> Netmiko 批次設定部署與指令發送</h2>
+        <p>管理數十台路由器時，需要安全地批次發送設定命令。Netmiko 的 <code>send_config_set</code> 可以自動幫我們進入全域設定模式 (Config Mode) 並批次套用。</p>
+        
+        <div class="file-header">netmiko_batch_config.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+<span class="cmt"># 定義設備連線參數字典</span>
+cisco_router = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret_password'</span>,
+    <span class="str">'secret'</span>: <span class="str">'enable_password'</span>, <span class="cmt"># 若需進入 enable 模式</span>
+}
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(<span class="str">"正在連線至設備..."</span>)
+    <span class="kw">with</span> ConnectHandler(**cisco_router) <span class="kw">as</span> net_connect:
+        <span class="cmt># 自動提升至 Privileged (Enable) 模式</span>
+        net_connect.enable()
+        
+        <span class="cmt"># 準備要批次執行的設定指令列表</span>
+        config_commands = [
+            <span class="str">'interface Loopback0'</span>,
+            <span class="str">'ip address 10.255.255.1 255.255.255.255'</span>,
+            <span class="str">'description Managed by Python Automation'</span>,
+            <span class="str">'no shutdown'</span>
+        ]
+        
+        <span class="kw">print</span>(<span class="str">"開始套用設定..."</span>)
+        output = net_connect.send_config_set(config_commands)
+        <span class="kw">print</span>(output)
+        
+        <span class="cmt"># 儲存設定</span>
+        save_output = net_connect.save_config()
+        <span class="kw">print</span>(<span class="str">"設定已儲存："</span>, save_output)
+        
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="kw">print</span>(f<span class="str">"連線或設定失敗：{e}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> Netmiko 透過 SCP 進行設定備份</h2>
+        <p>網管人員每日例行公事：將設備的 <code>running-config</code> 透過 SCP 或指令抓取並儲存到本地端歸檔。</p>
+
+        <div class="file-header">netmiko_backup.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+<span class="kw">import</span> time
+
+device = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret_password'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**device) <span class="kw">as</span> net_connect:
+    <span class="cmt"># 1. 抓取 running-config 文字輸出</span>
+    config_content = net_connect.send_command(<span class="str">'show running-config'</span>)
+    
+    <span class="cmt"># 2. 依照當前日期產生動態檔名</span>
+    filename = f<span class="str">"backup_{device['host']}_{time.strftime('%Y%m%d_%H%M%S')}.cfg"</span>
+    
+    <span class="cmt"># 3. 寫入本地檔案</span>
+    <span class="kw">with</span> open(filename, <span class="str">'w'</span>, encoding=<span class="str">'utf-8'</span>) <span class="kw">as</span> f:
+        f.write(config_content)
+        
+    <span class="kw">print</span>(f<span class="str">"備份成功！檔案已儲存為：{filename}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> NAPALM 跨廠牌標準化資訊擷取 (Getters)</h2>
+        <p>寫自動化腳本最痛苦的是 Cisco 和 Juniper 的指令長得不一樣。<strong>NAPALM</strong> 提供統一的 API，呼叫相同的函式就能回傳結構化的 Python 字典 (Dictionary)。</p>
+
+        <div class="file-header">napalm_getters.py</div>
+        <pre><code><span class="kw">from</span> napalm <span class="kw">import</span> get_network_driver
+
+<span class="cmt"># 指定驅動程式類型 (cisco_ios, junos, arista_eos 等)</span>
+driver = get_network_driver(<span class="str">'ios'</span>)
+
+<span class="cmt"># 建立連線</span>
+device = driver(
+    hostname=<span class="str">'192.168.1.1'</span>,
+    username=<span class="str">'admin'</span>,
+    password=<span class="str">'secret_password'</span>
+)
+
+device.open()
+<span class="kw">print</span>(<span class="str">"已成功透過 NAPALM 連線設備"</span>)
+
+<span class="cmt"># 1. 取得設備基本事實 (型號、序號、版本等)</span>
+facts = device.get_facts()
+<span class="kw">print</span>(<span class="str">"設備型號："</span>, facts[<span class="str">'model'</span>])
+<span class="kw">print</span>(<span class="str">"作業系統版本："</span>, facts[<span class="str">'os_version'</span>])
+
+<span class="cmt"># 2. 取得介面 IP 位址資訊</span>
+ip_interfaces = device.get_interfaces_ip()
+<span class="kw">print</span>(<span class="str">"介面 IP 狀態："</span>, ip_interfaces)
+
+<span class="cmt"># 3. 取得 ARP 表</span>
+arp_table = device.get_arp_table()
+<span class="kw">print</span>(f<span class="str">"目前 ARP 紀錄筆數：{len(arp_table)}"</span>)
+
+device.close()</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> NAPALM 設定比對 (Diff) 與 Rollback 回滾機制</h2>
+        <p>上線新設定最怕手殘打錯導致斷線。NAPALM 支援「先比較差異 (Diff)，確認無誤再提交 (Commit)，出事一鍵還原 (Rollback)」的安全發布流程。</p>
+
+        <div class="file-header">napalm_diff_rollback.py</div>
+        <pre><code><span class="kw">from</span> napalm <span class="kw">import</span> get_network_driver
+
+driver = get_network_driver(<span class="str">'ios'</span>)
+device = driver(hostname=<span class="str">'192.168.1.1'</span>, username=<span class="str">'admin'</span>, password=<span class="str">'secret'</span>)
+device.open()
+
+<span class="cmt"># 1. 載入想要替換或新增的設定檔 (可指定檔案或字串)</span>
+device.load_replace_candidate(filename=<span class="str">'new_router_config.cfg'</span>)
+<span class="cmt># 或是用 load_merge_candidate(filename='merge.cfg') 進行合併設定</span>
+
+<span class="cmt"># 2. 比對當前設定與候選設定的差異 (Diff)</span>
+diffs = device.compare_config()
+<span class="kw">print</span>(<span class="str">"=== 設定差異比對 (Diff) ==="</span>)
+<span class="kw">print</span>(diffs <span class="kw">if</span> diffs <span class="kw">else</span> <span class="str">"沒有任何差異"</span>)
+
+<span class="kw">if</span> diffs:
+    user_input = input(<span class="str">"確認要套用以上變更嗎？(y/n): "</span>)
+    <span class="kw">if</span> user_input.lower() == <span class="str">'y'</span>:
+        device.commit_config()
+        <span class="kw">print</span>(<span class="str">"設定已成功 Commit！"</span>)
+        
+        <span class="cmt"># 假設發現網路不通，可以立刻執行 Rollback 還原到異動前的狀態！</span>
+        <span class="cmt"># device.rollback()</span>
+    <span class="kw">else</span>:
+        device.discard_config()
+        <span class="kw">print</span>(<span class="str">"已放棄變更，清除候選設定。"</span>)
+
+device.close()</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> Nornir 框架：使用 Inventory 與多執行緒平行自動化</h2>
+        <p>當設備量達到上百台時，循序跑腳本會花費數小時。<strong>Nornir</strong> 是基於純 Python 的自動化框架，內建多執行緒排程，能同時對多台設備派發任務。</p>
+
+        <div class="file-header">config.yaml (Nornir 設定檔)</div>
+        <pre><code>runner:
+  plugin: threaded
+  options:
+    num_workers: 20  # 同時開啟 20 個執行緒併發處理
+
+inventory:
+  plugin: SimpleInventory
+  options:
+    host_file: "inventory/hosts.yaml"
+    group_file: "inventory/groups.yaml"</code></pre>
+
+        <div class="file-header">nornir_threaded_task.py</div>
+        <pre><code><span class="kw">from</span> nornir <span class="kw">import</span> InitNornir
+<span class="kw">from</span> nornir_netmiko.tasks <span class="kw">import</span> netmiko_send_command
+<span class="kw">from</span> nornir_utils.plugins.functions <span class="kw">import</span> print_result
+
+<span class="cmt"># 初始化 Nornir，讀取 config.yaml</span>
+nr = InitNornir(config_file=<span class="str">"config.yaml"</span>)
+
+<span class="cmt"># 定義要在所有設備上執行的任務</span>
+<span class="kw">def</span> <span class="fn">check_cpu_memory</span>(task):
+    <span class="cmt"># 使用 netmiko 發送指令</span>
+    result = task.run(
+        task=netmiko_send_command,
+        command_string=<span class="str">"show processes cpu sorted | exclude 0.00%"</span>
+    )
+    <span class="cmt"># 將結果記錄或印出</span>
+    task.host[<span class="str">"cpu_output"</span>] = result.result
+
+<span class="cmt"># 透過 .run() 派發任務，Nornir 會自動使用多執行緒同時對 inventory 中的所有設備發動請求！</span>
+results = nr.run(task=check_cpu_memory)
+
+<span class="cmt"># 內建的美化輸出函式</span>
+print_result(results)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> Nornir 結合 NAPALM：批次驗證網路健康狀態</h2>
+        <p>結合 Nornir 的高速併發與 NAPALM 的標準化檢測能力，我們可以一秒鐘巡檢全網路由器的 BGP 鄰居狀態、介面 Up/Down 狀況，並產出健康報告。</p>
+
+        <div class="file-header">nornir_napalm_audit.py</div>
+        <pre><code><span class="kw">from</span> nornir <span class="kw">import</span> InitNornir
+<span class="kw">from</span> nornir_napalm.plugins.tasks <span class="kw">import</span> napalm_get
+<span class="kw">from</span> nornir_utils.plugins.functions <span class="kw">import</span> print_result
+
+nr = InitNornir(config_file=<span class="str">"config.yaml"</span>)
+
+<span class="kw">def</span> <span class="fn">audit_network_health</span>(task):
+    <span class="cmt"># 使用 NAPALM 取得介面狀態與 BGP 鄰居狀態</span>
+    result = task.run(
+        task=napalm_get,
+        getters=[<span class="str">"interfaces"</span>, <span class="str">"bgp_neighbors"</span>]
+    )
+    
+    facts = result.result
+    task.host[<span class="str">"interfaces_data"</span>] = facts[<span class="str">"interfaces"</span>]
+    task.host[<span class="str">"bgp_data"</span>] = facts[<span class="str">"bgp_neighbors"</span>]
+
+<span class="cmt"># 執行稽核任務</span>
+results = nr.run(task=audit_network_health)
+print_result(results)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

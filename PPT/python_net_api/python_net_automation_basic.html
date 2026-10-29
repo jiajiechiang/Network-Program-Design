@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路自動化基礎教學：6 大核心入門實戰</title>
+    <style>
+        :root {
+            --primary-color: #0f172a; /* Slate Dark */
+            --secondary-color: #3b82f6; /* Blue */
+            --accent-color: #10b981; /* Emerald Green */
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --code-bg: #1e293b;
+            --code-color: #e2e8f0;
+            --border-color: #cbd5e1;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--primary-color); border-bottom: 2px solid var(--secondary-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: var(--primary-color); margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #eff6ff; color: #1e40af; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid #dbeafe; }
+        .file-header { background-color: #0f172a; color: #94a3b8; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border-bottom: 1px solid #334155; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; }
+        code { background-color: #e2e8f0; color: #e11d48; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #60a5fa; font-weight: bold; } /* keyword */
+        .str { color: #34d399; } /* string */
+        .cmt { color: #64748b; font-style: italic; } /* comment */
+        .fn { color: #f472b6; } /* function */
+        .cls { color: #fbbf24; font-style: italic; } /* class */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路自動化基礎教學</h1>
+    <p>從手動 CLI 邁向自動化管理：Paramiko 底層 SSH 與 Netmiko 高階套件 6 大入門實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>基礎網管自動化環境準備：</strong><br>
+        傳統網管需要工程師一台一台登入路由器敲指令。Python 自動化能透過 SSH 通訊協定瞬間完成設備巡檢與指令下發。<br><br>
+        基礎篇我們將學習底層的 <strong>Paramiko</strong> 以及專為網路設備設計的高階套件 <strong>Netmiko</strong>。<br>
+        請在終端機安裝：<code>pip install paramiko netmiko</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> Paramiko 底層 SSH：單一設備指令發送</h2>
+        <p><strong>Paramiko</strong> 是 Python 最經典的純 SSHv2 協議函式庫。我們透過它建立安全的 SSH 通訊管道，並發送 `show version` 指令抓取系統資訊。</p>
+        
+        <div class="file-header">paramiko_ssh_basic.py</div>
+        <pre><code><span class="kw">import</span> paramiko
+<span class="kw">import</span> time
+
+HOST = <span class="str">'192.168.1.1'</span>
+PORT = <span class="num">22</span>
+USER = <span class="str">'admin'</span>
+PASS = <span class="str">'secret_password'</span>
+
+<span class="cmt"># 1. 建立 SSHClient 實例</span>
+ssh = paramiko.SSHClient()
+
+<span class="cmt"># 2. 自動接受未知主機的 SSH Key (避免首次連線卡住詢問 yes/no)</span>
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(f<span class="str">"正在連線至 {HOST}..."</span>)
+    ssh.connect(hostname=HOST, port=PORT, username=USER, password=PASS, timeout=<span class="num">5</span>)
+    
+    <span class="cmt"># 3. 開啟互動式 Shell 頻道</span>
+    shell = ssh.invoke_shell()
+    time.sleep(<span class="num">1</span>)
+    
+    <span class="cmt"># 4. 發送指令</span>
+    shell.send(<span class="str">'show version\n'</span>)
+    time.sleep(<span class="num">2</span>)
+    
+    <span class="cmt"># 5. 接收並解碼輸出結果</span>
+    output = shell.recv(<span class="num">65535</span>).decode(<span class="str">'utf-8'</span>)
+    <span class="kw">print</span>(output)
+    
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="kw">print</span>(f<span class="str">"連線失敗：{e}"</span>)
+<span class="kw">finally</span>:
+    ssh.close()</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 解決提示字元卡住：Netmiko 登場</h2>
+        <p>用 Paramiko 處理網路設備時，常會遇到「命令分頁 (---More---)」或提示字元未回傳導致程式卡死的問題。<strong>Netmiko</strong> 是基於 Paramiko 封裝的高階套件，專門用來解決這些痛點。</p>
+
+        <div class="file-header">netmiko_simple_connect.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+<span class="cmt"># 定義設備基本參數字典</span>
+cisco_switch = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>, <span class="cmt"># 指定設備廠牌型號，Netmiko 會自動處理互動特性</span>
+    <span class="str">'host'</span>: <span class="str">'192.168.1.2'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret_password'</span>,
+}
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(<span class="str">"透過 Netmiko 建立連線..."</span>)
+    <span class="cmt"># 使用 with 語法，離開時會自動關閉 SSH 連線</span>
+    <span class="kw">with</span> ConnectHandler(**cisco_switch) <span class="kw">as</span> net_connect:
+        
+        <span class="cmt"># 發送單一唯讀指令 (自動處理 More 分頁與等待提示字元)</span>
+        output = net_connect.send_command(<span class="str">'show ip interface brief'</span>)
+        
+        <span class="kw">print</span>(<span class="str">"=== 介面狀態結果 ==="</span>)
+        <span class="kw">print</span>(output)
+        
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="kw">print</span>(f<span class="str">"Netmiko 連線錯誤：{e}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 批次巡檢：多台設備清單迴圈 (For Loop)</h2>
+        <p>網管自動化的精髓在於規模化。我們可以使用 Python 的清單與迴圈，依序對多台不同 IP 的路由器發送相同的巡檢指令。</p>
+
+        <div class="file-header">netmiko_multi_devices.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+<span class="cmt"># 定義多台設備清單</span>
+devices_list = [
+    {
+        <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+        <span class="str">'host'</span>: <span class="str">'192.168.1.10'</span>,
+        <span class="str">'username'</span>: <span class="str">'admin'</span>,
+        <span class="str">'password'</span>: <span class="str">'password123'</span>,
+    },
+    {
+        <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+        <span class="str">'host'</span>: <span class="str">'192.168.1.11'</span>,
+        <span class="str">'username'</span>: <span class="str">'admin'</span>,
+        <span class="str">'password'</span>: <span class="str">'password123'</span>,
+    }
+]
+
+<span class="kw">for</span> dev_params <span class="kw">in</span> devices_list:
+    <span class="kw">print</span>(f<span class="str">"\n--- 正在巡檢設備: {dev_params['host']} ---"</span>)
+    <span class="kw">try</span>:
+        <span class="kw">with</span> ConnectHandler(**dev_params) <span class="kw">as</span> conn:
+            uptime = conn.send_command(<span class="str">'show version | include uptime'</span>)
+            <span class="kw">print</span>(uptime.strip())
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">print</span>(f<span class="str">"無法連線至 {dev_params['host']}：{e}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 輸出結果儲存：將巡檢結果寫入 TXT 檔案</h2>
+        <p>自動化抓取資料後，通常需要存成記錄檔以便後續查閱或稽核。我們結合 Python 的檔案寫入操作來歸檔輸出。</p>
+
+        <div class="file-header">netmiko_save_to_file.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+
+router = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**router) <span class="kw">as</span> conn:
+    <span class="cmt"># 抓取 ARP 表</span>
+    arp_output = conn.send_command(<span class="str">'show ip arp'</span>)
+    
+    filename = <span class="str">'arp_report.txt'</span>
+    <span class="cmt"># 寫入檔案</span>
+    <span class="kw">with</span> open(filename, <span class="str">'w'</span>, encoding=<span class="str">'utf-8'</span>) <span class="kw">as</span> f:
+        f.write(<span class="str">"=== 網路自動化 ARP 巡檢報告 ===\n"</span>)
+        f.write(arp_output)
+        
+    <span class="kw">print</span>(f<span class="str">"報表已成功儲存至 {filename}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 文字特徵解析：使用正則表達式 (Regex) 萃取資料</h2>
+        <p>抓回來的指令輸出是一大串純文字。透過 Python 的 <code>re</code> 模組（正規表達式），我們可以精準抓取想要的數值 (例如介面狀態、CPU 使用率)。</p>
+
+        <div class="file-header">netmiko_regex_parse.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+<span class="kw">import</span> re
+
+router = {
+    <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+    <span class="str">'host'</span>: <span class="str">'192.168.1.1'</span>,
+    <span class="str">'username'</span>: <span class="str">'admin'</span>,
+    <span class="str">'password'</span>: <span class="str">'secret'</span>
+}
+
+<span class="kw">with</span> ConnectHandler(**router) <span class="kw">as</span> conn:
+    output = conn.send_command(<span class="str">'show ip interface brief'</span>)
+    
+    <span class="cmt"># 範例輸出某行：FastEthernet0/0   192.168.1.254   YES manual up      up</span>
+    <span class="cmt"># 我們使用正則表達式抓取介面名稱與 IP 狀態</span>
+    lines = output.splitlines()
+    <span class="kw">print</span>(f<span class="str">"{'介面名稱':&lt;20} | {'IP 位址':&lt;15} | {'狀態':&lt;10}"</span>)
+    <span class="kw">print</span>(<span class="str">"-"</span> * 50)
+    
+    <span class="kw">for</span> line <span class="kw">in</span> lines:
+        <span class="cmt"># 略過標題行</span>
+        <span class="kw">if</span> <span class="str">'Interface'</span> <span class="kw">in</span> line <span class="kw">or</span> <span class="str">'----'</span> <span class="kw">in</span> line <span class="kw">or not</span> line.strip():
+            <span class="kw">continue</span>
+            
+        parts = line.split()
+        if len(parts) >= <span class="num">5</span>:
+            intf, ip, status = parts[<span class="num">0</span>], parts[<span class="num">1</span>], parts[<span class="num">3</span>]
+            <span class="kw">if</span> ip != <span class="str">'unassigned'</span>:
+                <span class="kw">print</span>(f<span class="str">"{intf:&lt;20} | {ip:&lt;15} | {status:&lt;10}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 異常處理與重試機制 (Try-Except)</h2>
+        <p>網路環境瞬息萬變，設備可能重開機或發生網路逾時。基礎網管自動化必須具備強健的異常捕捉能力，避免腳本因為一台設備故障就全面崩潰。</p>
+
+        <div class="file-header">netmiko_error_handling.py</div>
+        <pre><code><span class="kw">from</span> netmiko <span class="kw">import</span> ConnectHandler
+<span class="kw">from</span> netmiko.exceptions <span class="kw">import</span> NetmikoTimeoutException, AuthenticationException
+
+devices = [<span class="str">'192.168.1.1'</span>, <span class="str">'192.168.1.99'</span>] <span class="cmt"># 99 為不存在的 IP</span>
+
+<span class="kw">for</span> ip <span class="kw">in</span> devices:
+    config = {
+        <span class="str">'device_type'</span>: <span class="str">'cisco_ios'</span>,
+        <span class="str">'host'</span>: ip,
+        <span class="str">'username'</span>: <span class="str">'admin'</span>,
+        <span class="str">'password'</span>: <span class="str">'wrong_or_right'</span>,
+        <span class="str">'timeout'</span>: <span class="num">3</span> <span class="cmt"># 設定 3 秒超時</span>
+    }
+    
+    <span class="kw">try</span>:
+        <span class="kw">print</span>(f<span class="str">"嘗試連線至 {ip}..."</span>)
+        <span class="kw">with</span> ConnectHandler(**config) <span class="kw">as</span> conn:
+            res = conn.send_command(<span class="str">'show clock'</span>)
+            <span class="kw">print</span>(f<span class="str">"[{ip}] 系統時間：{res.strip()}"</span>)
+            
+    <span class="kw">except</span> NetmikoTimeoutException:
+        <span class="kw">print</span>(f<span class="str">"❌ 錯誤：連線至 {ip} 逾時 (Timeout)，設備可能離線。"</span>)
+    <span class="kw">except</span> AuthenticationException:
+        <span class="kw">print</span>(f<span class="str">"🔒 錯誤：{ip} 帳號密碼驗證失敗 (Authentication Failed)。"</span>)
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">print</span>(f<span class="str">"⚠️ 發生未預期的錯誤：{e}"</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>
