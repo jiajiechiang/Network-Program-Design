@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Flask 中階教學：6 大核心實戰範例</title>
+    <style>
+        :root {
+            --primary-color: #16a085; /* Teal */
+            --secondary-color: #27ae60; /* Green */
+            --accent-color: #f39c12;
+            --bg-color: #f4f9f9;
+            --text-color: #2c3e50;
+            --code-bg: #282c34;
+            --code-color: #abb2bf;
+            --border-color: #bdc3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--accent-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-badge {
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #e8f8f5;
+            color: #117a65;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 5px solid var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .file-header {
+            background-color: #34495e;
+            color: #ecf0f1;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #2c3e50;
+            display: inline-block;
+            width: 100%;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        code {
+            background-color: #eaeded;
+            color: #c0392b;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .folder-structure {
+            background-color: #fff;
+            border: 1px dashed var(--border-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre;
+            margin-bottom: 1.5rem;
+            color: #34495e;
+            line-height: 1.5;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #c678dd; } /* keyword */
+        .str { color: #98c379; } /* string */
+        .cmt { color: #7f848e; font-style: italic; } /* comment */
+        .fn { color: #61afef; } /* function */
+        .op { color: #56b6c2; } /* operator */
+        .html-tag { color: #e06c75; }
+        .html-attr { color: #d19a66; }
+        .jinja { color: #e5c07b; font-weight: bold;}
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python Flask 中階教學指南</h1>
+    <p>涵蓋 Jinja2 模板、表單處理與靜態資源的 6 大實戰範例</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>專案結構提醒：</strong> 進入中階開發，我們的網頁不再只是一行文字。請確保您的專案資料夾包含 <code>templates/</code>（存放 HTML）與 <code>static/</code>（存放 CSS/圖片/JS）。
+    </div>
+
+    <div class="folder-structure">my_project/
+│
+├── app.py                # 主程式
+├── static/               # 靜態資源資料夾 (CSS, JS, 圖片)
+│   └── style.css
+│
+└── templates/            # 模板資料夾 (HTML 檔案)
+    ├── base.html
+    ├── index.html
+    └── login.html</div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 基礎變數傳遞與渲染 (Jinja2)</h2>
+        <p>Flask 使用 Jinja2 作為模板引擎。你可以輕鬆地將 Python 變數傳到 HTML 中顯示。</p>
+        
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, render_template
+
+app <span class="op">=</span> Flask(__name__)
+
+@app.route(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">index</span>():
+    <span class="cmt"># 將字串與整數傳遞給 HTML</span>
+    <span class="kw">return</span> render_template(<span class="str">'index.html'</span>, user_name<span class="op">=</span><span class="str">"Alice"</span>, unread_count<span class="op">=</span>5)</code></pre>
+
+        <div class="file-header">templates/index.html</div>
+        <pre><code><span class="html-tag">&lt;h1&gt;</span>歡迎，<span class="jinja">{{ user_name }}</span>！<span class="html-tag">&lt;/h1&gt;</span>
+<span class="html-tag">&lt;p&gt;</span>您目前有 <span class="jinja">{{ unread_count }}</span> 則未讀訊息。<span class="html-tag">&lt;/p&gt;</span></code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 條件判斷與迴圈 (If / For)</h2>
+        <p>在 HTML 裡面也能寫程式邏輯！利用 <code>{% if %}</code> 和 <code>{% for %}</code> 動態產生網頁內容。</p>
+
+        <div class="file-header">app.py</div>
+        <pre><code>@app.route(<span class="str">'/products'</span>)
+<span class="kw">def</span> <span class="fn">products</span>():
+    <span class="cmt"># 準備一個字典列表</span>
+    item_list <span class="op">=</span> [
+        {<span class="str">'name'</span>: <span class="str">'筆記型電腦'</span>, <span class="str">'price'</span>: 30000, <span class="str">'in_stock'</span>: <span class="kw">True</span>},
+        {<span class="str">'name'</span>: <span class="str">'無線滑鼠'</span>, <span class="str">'price'</span>: 800, <span class="str">'in_stock'</span>: <span class="kw">False</span>},
+        {<span class="str">'name'</span>: <span class="str">'機械鍵盤'</span>, <span class="str">'price'</span>: 2500, <span class="str">'in_stock'</span>: <span class="kw">True</span>}
+    ]
+    <span class="kw">return</span> render_template(<span class="str">'products.html'</span>, items<span class="op">=</span>item_list)</code></pre>
+
+        <div class="file-header">templates/products.html</div>
+        <pre><code><span class="html-tag">&lt;h2&gt;</span>產品列表<span class="html-tag">&lt;/h2&gt;</span>
+<span class="html-tag">&lt;ul&gt;</span>
+    <span class="jinja">{% for item in items %}</span>
+        <span class="html-tag">&lt;li&gt;</span>
+            <span class="jinja">{{ item.name }}</span> - $<span class="jinja">{{ item.price }}</span>
+            <span class="jinja">{% if item.in_stock %}</span>
+                <span class="html-tag">&lt;span</span> <span class="html-attr">style</span>=<span class="str">"color: green;"</span><span class="html-tag">&gt;</span>(有現貨)<span class="html-tag">&lt;/span&gt;</span>
+            <span class="jinja">{% else %}</span>
+                <span class="html-tag">&lt;span</span> <span class="html-attr">style</span>=<span class="str">"color: red;"</span><span class="html-tag">&gt;</span>(已售完)<span class="html-tag">&lt;/span&gt;</span>
+            <span class="jinja">{% endif %}</span>
+        <span class="html-tag">&lt;/li&gt;</span>
+    <span class="jinja">{% endfor %}</span>
+<span class="html-tag">&lt;/ul&gt;</span></code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 模板繼承 (Template Inheritance)</h2>
+        <p>每個網頁都有共同的導覽列 (Navbar) 和頁尾 (Footer)。使用「模板繼承」可以避免重複寫相同的 HTML 程式碼。</p>
+
+        <div class="file-header">templates/base.html (父模板)</div>
+        <pre><code><span class="html-tag">&lt;!DOCTYPE html&gt;</span>
+<span class="html-tag">&lt;html&gt;</span>
+<span class="html-tag">&lt;head&gt;</span>
+    <span class="html-tag">&lt;title&gt;</span>我的網站<span class="html-tag">&lt;/title&gt;</span>
+<span class="html-tag">&lt;/head&gt;</span>
+<span class="html-tag">&lt;body&gt;</span>
+    <span class="html-tag">&lt;nav&gt;</span>這是一共用的導覽列<span class="html-tag">&lt;/nav&gt;</span>
+    
+    <span class="html-tag">&lt;hr&gt;</span>
+    <span class="cmt">&lt;!-- 定義一個名為 content 的區塊，讓子模板填入內容 --&gt;</span>
+    <span class="jinja">{% block content %}{% endblock %}</span>
+    <span class="html-tag">&lt;hr&gt;</span>
+    
+    <span class="html-tag">&lt;footer&gt;</span>版權所有 © 2026<span class="html-tag">&lt;/footer&gt;</span>
+<span class="html-tag">&lt;/body&gt;</span>
+<span class="html-tag">&lt;/html&gt;</span></code></pre>
+
+        <div class="file-header">templates/about.html (子模板)</div>
+        <pre><code><span class="cmt">&lt;!-- 繼承 base.html --&gt;</span>
+<span class="jinja">{% extends "base.html" %}</span>
+
+<span class="cmt">&lt;!-- 覆寫 content 區塊 --&gt;</span>
+<span class="jinja">{% block content %}</span>
+    <span class="html-tag">&lt;h2&gt;</span>關於我們<span class="html-tag">&lt;/h2&gt;</span>
+    <span class="html-tag">&lt;p&gt;</span>這裡的內容會自動被放入 base.html 的中間！<span class="html-tag">&lt;/p&gt;</span>
+<span class="jinja">{% endblock %}</span></code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 載入靜態檔案 (CSS / 圖片)</h2>
+        <p>在 Flask 中，CSS、JS 或圖片不能直接使用相對路徑，必須使用 <code>url_for</code> 函式來產生正確的靜態檔案網址。</p>
+
+        <div class="file-header">templates/style_demo.html</div>
+        <pre><code><span class="html-tag">&lt;head&gt;</span>
+    <span class="cmt">&lt;!-- 載入 static 資料夾下的 style.css --&gt;</span>
+    <span class="html-tag">&lt;link</span> <span class="html-attr">rel</span>=<span class="str">"stylesheet"</span> <span class="html-attr">href</span>=<span class="str">"<span class="jinja">{{ url_for('static', filename='style.css') }}</span>"</span><span class="html-tag">&gt;</span>
+<span class="html-tag">&lt;/head&gt;</span>
+<span class="html-tag">&lt;body&gt;</span>
+    <span class="cmt">&lt;!-- 載入 static/images 資料夾下的 logo.png --&gt;</span>
+    <span class="html-tag">&lt;img</span> <span class="html-attr">src</span>=<span class="str">"<span class="jinja">{{ url_for('static', filename='images/logo.png') }}</span>"</span> <span class="html-attr">alt</span>=<span class="str">"Logo"</span><span class="html-tag">&gt;</span>
+<span class="html-tag">&lt;/body&gt;</span></code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 處理表單傳送 (GET 與 POST)</h2>
+        <p>網頁前後端互動的核心。GET 用於取得頁面，POST 用於提交敏感或大量資料（如登入、填寫問卷）。</p>
+
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> request
+
+<span class="cmt"># 允許這個路由處理 GET 與 POST 方法</span>
+@app.route(<span class="str">'/login'</span>, methods<span class="op">=</span>[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    <span class="kw">if</span> request.method <span class="op">==</span> <span class="str">'POST'</span>:
+        <span class="cmt"># 抓取表單中 name 屬性為 username 和 password 的值</span>
+        user <span class="op">=</span> request.form.get(<span class="str">'username'</span>)
+        pwd <span class="op">=</span> request.form.get(<span class="str">'password'</span>)
+        
+        <span class="kw">if</span> user <span class="op">==</span> <span class="str">'admin'</span> <span class="kw">and</span> pwd <span class="op">==</span> <span class="str">'1234'</span>:
+            <span class="kw">return</span> <span class="str">"登入成功！"</span>
+        <span class="kw">else</span>:
+            <span class="kw">return</span> <span class="str">"帳號或密碼錯誤。"</span>
+            
+    <span class="cmt"># 如果是 GET 請求，就回傳登入表單頁面</span>
+    <span class="kw">return</span> render_template(<span class="str">'login.html'</span>)</code></pre>
+        
+        <div class="file-header">templates/login.html</div>
+        <pre><code><span class="cmt">&lt;!-- method 設為 POST --&gt;</span>
+<span class="html-tag">&lt;form</span> <span class="html-attr">method</span>=<span class="str">"POST"</span> <span class="html-attr">action</span>=<span class="str">"/login"</span><span class="html-tag">&gt;</span>
+    帳號: <span class="html-tag">&lt;input</span> <span class="html-attr">type</span>=<span class="str">"text"</span> <span class="html-attr">name</span>=<span class="str">"username"</span><span class="html-tag">&gt;</span><span class="html-tag">&lt;br&gt;</span>
+    密碼: <span class="html-tag">&lt;input</span> <span class="html-attr">type</span>=<span class="str">"password"</span> <span class="html-attr">name</span>=<span class="str">"password"</span><span class="html-tag">&gt;</span><span class="html-tag">&lt;br&gt;</span>
+    <span class="html-tag">&lt;button</span> <span class="html-attr">type</span>=<span class="str">"submit"</span><span class="html-tag">&gt;</span>登入<span class="html-tag">&lt;/button&gt;</span>
+<span class="html-tag">&lt;/form&gt;</span></code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 快閃訊息提示 (Flash Messages)</h2>
+        <p>在使用者操作成功或失敗後（例如密碼錯誤），在下一個頁面顯示一次性的提示訊息。這需要設定 <code>secret_key</code> 來啟用 Session 功能。</p>
+
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> flash, redirect, url_for
+
+<span class="cmt"># 使用 flash 必須設定 secret_key 進行加密</span>
+app.secret_key <span class="op">=</span> <span class="str">'my_secret_key_123'</span>
+
+@app.route(<span class="str">'/submit'</span>, methods<span class="op">=</span>[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">submit</span>():
+    <span class="cmt"># 假設處理了一些資料...</span>
+    <span class="cmt"># 發送成功訊息 (第二個參數 'success' 是訊息類別)</span>
+    flash(<span class="str">'資料已成功送出！'</span>, <span class="str">'success'</span>)
+    
+    <span class="cmt"># 重新導向回首頁</span>
+    <span class="kw">return</span> redirect(url_for(<span class="str">'index'</span>))</code></pre>
+
+        <div class="file-header">templates/index.html (接收端)</div>
+        <pre><code><span class="cmt">&lt;!-- 在頁面頂部擷取所有 flash 訊息 --&gt;</span>
+<span class="jinja">{% with messages = get_flashed_messages(with_categories=true) %}</span>
+  <span class="jinja">{% if messages %}</span>
+    <span class="html-tag">&lt;ul</span> <span class="html-attr">class</span>=<span class="str">"flashes"</span><span class="html-tag">&gt;</span>
+    <span class="jinja">{% for category, message in messages %}</span>
+      <span class="cmt">&lt;!-- 根據 category 設定不同的 CSS class --&gt;</span>
+      <span class="html-tag">&lt;li</span> <span class="html-attr">class</span>=<span class="str">"<span class="jinja">{{ category }}</span>"</span><span class="html-tag">&gt;</span><span class="jinja">{{ message }}</span><span class="html-tag">&lt;/li&gt;</span>
+    <span class="jinja">{% endfor %}</span>
+    <span class="html-tag">&lt;/ul&gt;</span>
+  <span class="jinja">{% endif %}</span>
+<span class="jinja">{% endwith %}</span></code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

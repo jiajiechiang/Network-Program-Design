@@ -1,0 +1,284 @@
+html_content_basic = """<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Flask 基礎教學：從零開始建立 Web 應用</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #e74c3c;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --code-bg: #282c34;
+            --code-color: #abb2bf;
+            --border-color: #dee2e6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--secondary-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 5px solid #28a745;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-info {
+            background-color: #e2e3e5;
+            color: #383d41;
+            border-left-color: #6c757d;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        code {
+            background-color: #e9ecef;
+            color: #d63384;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* 程式碼語法高亮 (簡易版) */
+        .kw { color: #c678dd; } /* keyword */
+        .str { color: #98c379; } /* string */
+        .cmt { color: #7f848e; font-style: italic; } /* comment */
+        .fn { color: #61afef; } /* function */
+        .op { color: #56b6c2; } /* operator */
+        
+        .step-number {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python Flask 基礎教學指南</h1>
+    <p>詳細指令、觀念解析與實作範例</p>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>環境建置與安裝</h2>
+        <div class="alert alert-info">
+            <strong>課前準備：</strong> 請確保您的電腦已經安裝了 Python (建議版本 3.8 以上)。
+        </div>
+        
+        <p><span class="step-number">1</span><strong>建立虛擬環境 (Virtual Environment)</strong></p>
+        <p>強烈建議為每個 Python 專案建立獨立的虛擬環境，避免套件版本衝突。</p>
+        <pre><code><span class="cmt"># 在終端機 (Terminal) 或命令提示字元中輸入：</span>
+<span class="cmt"># 1. 建立一個名為 my_flask_app 的資料夾並進入</span>
+mkdir my_flask_app
+cd my_flask_app
+
+<span class="cmt"># 2. 建立虛擬環境 (Windows)</span>
+python -m venv venv
+
+<span class="cmt"># 2. 建立虛擬環境 (macOS/Linux)</span>
+python3 -m venv venv</code></pre>
+
+        <p><span class="step-number">2</span><strong>啟動虛擬環境</strong></p>
+        <pre><code><span class="cmt"># Windows (Command Prompt):</span>
+venv\Scripts\activate.bat
+
+<span class="cmt"># Windows (PowerShell):</span>
+.\venv\Scripts\Activate.ps1
+
+<span class="cmt"># macOS / Linux:</span>
+source venv/bin/activate</code></pre>
+        <p>啟動成功後，你的終端機提示字元前面應該會多出 <code>(venv)</code> 的字樣。</p>
+
+        <p><span class="step-number">3</span><strong>安裝 Flask 套件</strong></p>
+        <pre><code>pip install Flask</code></pre>
+    </div>
+
+    <div class="card">
+        <h2>基礎範例一：第一個 Flask 應用程式 (Hello World)</h2>
+        <p>這是最基本的 Flask 程式碼，幫助您了解如何啟動一個 Web 伺服器並顯示文字。</p>
+        
+        <h3>建立檔案 <code>app.py</code></h3>
+        <p>在你的專案資料夾 (my_flask_app) 中，建立一個名為 <code>app.py</code> 的檔案，並輸入以下程式碼：</p>
+        
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+
+<span class="cmt"># 1. 初始化 Flask 應用程式實例</span>
+<span class="cmt"># __name__ 是一個特殊變數，代表當前模組的名稱。</span>
+<span class="cmt"># 讓 Flask 知道在哪裡尋找資源(如模板和靜態檔案)。</span>
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 2. 設定路由 (Route)</span>
+<span class="cmt"># 使用裝飾器 @app.route() 告訴 Flask 哪個 URL 應該觸發哪個函式。</span>
+<span class="cmt"># '/' 代表網站的根目錄 (首頁)。</span>
+@app.route(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">hello_world</span>():
+    <span class="cmt"># 這個函式回傳的內容將會顯示在瀏覽器上。</span>
+    <span class="kw">return</span> <span class="str">'&lt;h1&gt;Hello, World! 這是我的第一個 Flask 網站！&lt;/h1&gt;'</span>
+
+<span class="cmt"># 3. 啟動伺服器</span>
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    <span class="cmt"># debug=True: 開啟除錯模式。</span>
+    <span class="cmt"># 只要你修改了程式碼並儲存，伺服器就會自動重新載入，方便開發。</span>
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+
+        <h3>如何執行並測試？</h3>
+        <ol>
+            <li>確保你在終端機中，且虛擬環境是啟動的狀態 <code>(venv)</code>。</li>
+            <li>輸入指令執行程式：<br><code>python app.py</code></li>
+            <li>你會看到終端機輸出類似以下的訊息：
+<pre><code> * Serving Flask app 'app'
+ * Debug mode: on
+ * Running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!</code></pre>
+            </li>
+            <li>打開你的網頁瀏覽器，在網址列輸入：<code>http://127.0.0.1:5000</code> 或 <code>http://localhost:5000</code>。</li>
+            <li>你應該會看到網頁顯示：「Hello, World! 這是我的第一個 Flask 網站！」。</li>
+        </ol>
+        <div class="alert">
+            <strong>小提醒：</strong> 要停止伺服器，請在終端機中按下 <code>Ctrl + C</code>。
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>基礎範例二：動態路由 (Dynamic Routing)</h2>
+        <p>很多時候，我們希望網址是可以變動的，例如 <code>/user/alice</code> 和 <code>/user/bob</code>，而不需要為每個使用者寫一個獨立的路由。這就是動態路由。</p>
+
+        <h3>修改 <code>app.py</code> 加入新的路由：</h3>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+
+app <span class="op">=</span> Flask(__name__)
+
+@app.route(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">home</span>():
+    <span class="kw">return</span> <span class="str">'歡迎來到首頁'</span>
+
+<span class="cmt"># 1. 捕捉字串參數</span>
+<span class="cmt"># &lt;username&gt; 會捕捉網址列上的字串，並作為參數傳遞給 show_user_profile 函式。</span>
+@app.route(<span class="str">'/user/&lt;username&gt;'</span>)
+<span class="kw">def</span> <span class="fn">show_user_profile</span>(username):
+    <span class="kw">return</span> f<span class="str">'使用者頁面，帳號名稱為：{username}'</span>
+
+<span class="cmt"># 2. 捕捉特定型別的參數 (例如整數 int)</span>
+<span class="cmt"># &lt;int:post_id&gt; 指定這個部分必須是整數。</span>
+@app.route(<span class="str">'/post/&lt;int:post_id&gt;'</span>)
+<span class="kw">def</span> <span class="fn">show_post</span>(post_id):
+    <span class="cmt"># 注意：這裡的 post_id 型別會是 int，而不是字串。</span>
+    <span class="kw">return</span> f<span class="str">'您正在觀看第 {post_id} 篇文章。'</span>
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+
+        <h3>測試動態路由：</h3>
+        <ul>
+            <li>瀏覽 <code>http://localhost:5000/user/Tony</code>，畫面會顯示「使用者頁面，帳號名稱為：Tony」</li>
+            <li>瀏覽 <code>http://localhost:5000/post/42</code>，畫面會顯示「您正在觀看第 42 篇文章。」</li>
+            <li><strong>錯誤測試：</strong> 嘗試瀏覽 <code>http://localhost:5000/post/abc</code>，因為 <code>abc</code> 不是整數，Flask 會回傳 404 Not Found 錯誤。</li>
+        </ul>
+    </div>
+
+</div>
+
+</body>
+</html>"""
+
+with open("flask_tutorial_basic_detailed.html", "w", encoding="utf-8") as f:
+    f.write(html_content_basic)
+
+print("flask_tutorial_basic_detailed.html")

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Flask 進階教學：打造企業級 Web 應用</title>
+    <style>
+        :root {
+            --primary-color: #8e44ad;
+            --secondary-color: #9b59b6;
+            --accent-color: #e67e22;
+            --bg-color: #f5f6fa;
+            --text-color: #2f3640;
+            --code-bg: #2d3436;
+            --code-color: #dfe6e9;
+            --border-color: #dcdde1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--accent-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-badge {
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 0.9rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            margin-right: 1rem;
+            font-weight: bold;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #e8eaef;
+            color: #2f3640;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 5px solid var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .file-header {
+            background-color: #1e272e;
+            color: #bdc3c7;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #485460;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        code {
+            background-color: #e9ecef;
+            color: #d63031;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* 語法高亮 */
+        .kw { color: #c678dd; } /* keyword */
+        .str { color: #98c379; } /* string */
+        .cmt { color: #7f848e; font-style: italic; } /* comment */
+        .fn { color: #61afef; } /* function */
+        .op { color: #56b6c2; } /* operator */
+        .cls { color: #e5c07b; } /* class */
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python Flask 進階教學指南</h1>
+    <p>5 大實務範例 (API, Blueprint, 資料庫, 檔案上傳, Session)</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>課前準備：</strong> 在進階篇中，我們將使用到額外的套件。請先在虛擬環境中執行以下指令：<br>
+        <code>pip install Flask Flask-SQLAlchemy</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 建立 RESTful API (回傳 JSON)</h2>
+        <p>在現代網頁開發中，後端通常不需要負責渲染 HTML，而是作為 API 伺服器，將資料以 <strong>JSON</strong> 格式傳遞給前端（如 React, Vue, 或手機 App）。Flask 提供了 <code>jsonify</code> 來輕鬆達成。</p>
+        
+        <div class="file-header">app_api.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, jsonify, request
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 模擬資料庫資料</span>
+users_db <span class="op">=</span> [
+    {<span class="str">"id"</span>: 1, <span class="str">"name"</span>: <span class="str">"Alice"</span>, <span class="str">"role"</span>: <span class="str">"Admin"</span>},
+    {<span class="str">"id"</span>: 2, <span class="str">"name"</span>: <span class="str">"Bob"</span>, <span class="str">"role"</span>: <span class="str">"User"</span>}
+]
+
+@app.route(<span class="str">'/api/users'</span>, methods<span class="op">=</span>[<span class="str">'GET'</span>])
+<span class="kw">def</span> <span class="fn">get_users</span>():
+    <span class="cmt"># 將 Python 字典或列表轉換為 JSON 格式並加上正確的 HTTP Header</span>
+    <span class="kw">return</span> jsonify({
+        <span class="str">"status"</span>: <span class="str">"success"</span>,
+        <span class="str">"data"</span>: users_db
+    })
+
+@app.route(<span class="str">'/api/users/&lt;int:user_id&gt;'</span>, methods<span class="op">=</span>[<span class="str">'GET'</span>])
+<span class="kw">def</span> <span class="fn">get_user</span>(user_id):
+    user <span class="op">=</span> next((u <span class="kw">for</span> u <span class="kw">in</span> users_db <span class="kw">if</span> u[<span class="str">'id'</span>] <span class="op">==</span> user_id), <span class="kw">None</span>)
+    <span class="kw">if</span> user:
+        <span class="kw">return</span> jsonify(user)
+    <span class="kw">return</span> jsonify({<span class="str">"error"</span>: <span class="str">"User not found"</span>}), 404
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+        <p><strong>測試方式：</strong> 啟動後在瀏覽器訪問 <code>http://127.0.0.1:5000/api/users</code>，即可看到 JSON 格式的資料。</p>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 藍圖 Blueprint (模組化專案架構)</h2>
+        <p>當專案變大時，把所有路由都寫在同一個 <code>app.py</code> 會導致檔案過大難以維護。<strong>Blueprint</strong> 允許我們將應用程式拆分成多個模組。</p>
+        
+        <p>資料夾結構假設為：</p>
+        <ul>
+            <li><code>app.py</code> (主程式)</li>
+            <li><code>routes/auth.py</code> (登入註冊模組)</li>
+        </ul>
+
+        <div class="file-header">routes/auth.py (認證模組)</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Blueprint
+
+<span class="cmt"># 建立 Blueprint 實例，設定 url_prefix 使該模組下所有路由自動加上 /auth 前綴</span>
+auth_bp <span class="op">=</span> Blueprint(<span class="str">'auth'</span>, __name__, url_prefix<span class="op">=</span><span class="str">'/auth'</span>)
+
+@auth_bp.route(<span class="str">'/login'</span>)
+<span class="kw">def</span> <span class="fn">login</span>():
+    <span class="kw">return</span> <span class="str">"這裡是登入頁面 (路由為 /auth/login)"</span>
+
+@auth_bp.route(<span class="str">'/register'</span>)
+<span class="kw">def</span> <span class="fn">register</span>():
+    <span class="kw">return</span> <span class="str">"這裡是註冊頁面 (路由為 /auth/register)"</span></code></pre>
+
+        <div class="file-header">app.py (主程式)</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+<span class="kw">from</span> routes.auth <span class="kw">import</span> auth_bp <span class="cmt"># 匯入寫好的 Blueprint</span>
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 將 Blueprint 註冊到主應用程式中</span>
+app.register_blueprint(auth_bp)
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 資料庫整合 (Flask-SQLAlchemy)</h2>
+        <p>使用 ORM (Object-Relational Mapping) 技術，我們可以用 Python 物件導向的方式操作資料庫，而不用手寫複雜的 SQL 語法。這裡以 SQLite 為例。</p>
+
+        <div class="file-header">app_db.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, jsonify
+<span class="kw">from</span> flask_sqlalchemy <span class="kw">import</span> SQLAlchemy
+
+app <span class="op">=</span> Flask(__name__)
+<span class="cmt"># 設定資料庫連線位址 (使用本地端的 SQLite 檔案 data.db)</span>
+app.config[<span class="str">'SQLALCHEMY_DATABASE_URI'</span>] <span class="op">=</span> <span class="str">'sqlite:///data.db'</span>
+app.config[<span class="str">'SQLALCHEMY_TRACK_MODIFICATIONS'</span>] <span class="op">=</span> <span class="kw">False</span>
+
+db <span class="op">=</span> SQLAlchemy(app)
+
+<span class="cmt"># 定義資料表模型 (Model)</span>
+<span class="kw">class</span> <span class="cls">User</span>(db.Model):
+    id <span class="op">=</span> db.Column(db.Integer, primary_key<span class="op">=</span><span class="kw">True</span>)
+    username <span class="op">=</span> db.Column(db.String(80), unique<span class="op">=</span><span class="kw">True</span>, nullable<span class="op">=</span><span class="kw">False</span>)
+    email <span class="op">=</span> db.Column(db.String(120), unique<span class="op">=</span><span class="kw">True</span>, nullable<span class="op">=</span><span class="kw">False</span>)
+
+<span class="cmt"># 建立資料庫與資料表 (必須在 app context 內執行)</span>
+<span class="kw">with</span> app.app_context():
+    db.create_all()
+
+@app.route(<span class="str">'/add_user'</span>, methods<span class="op">=</span>[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">add_user</span>():
+    <span class="cmt"># 建立新使用者物件</span>
+    new_user <span class="op">=</span> <span class="cls">User</span>(username<span class="op">=</span><span class="str">'JohnDoe'</span>, email<span class="op">=</span><span class="str">'john@example.com'</span>)
+    <span class="cmt"># 加入並儲存到資料庫</span>
+    db.session.add(new_user)
+    db.session.commit()
+    <span class="kw">return</span> <span class="str">"使用者新增成功！"</span></code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 檔案上傳處理 (File Upload)</h2>
+        <p>處理使用者上傳的圖片或文件。請注意 HTML 表單必須加上 <code>enctype="multipart/form-data"</code>。</p>
+
+        <div class="file-header">app_upload.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, render_template_string
+<span class="kw">import</span> os
+<span class="kw">from</span> werkzeug.utils <span class="kw">import</span> secure_filename
+
+app <span class="op">=</span> Flask(__name__)
+<span class="cmt"># 設定上傳資料夾徑路</span>
+UPLOAD_FOLDER <span class="op">=</span> <span class="str">'./uploads'</span>
+os.makedirs(UPLOAD_FOLDER, exist_ok<span class="op">=</span><span class="kw">True</span>)
+app.config[<span class="str">'UPLOAD_FOLDER'</span>] <span class="op">=</span> UPLOAD_FOLDER
+
+@app.route(<span class="str">'/upload'</span>, methods<span class="op">=</span>[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">upload_file</span>():
+    <span class="kw">if</span> request.method <span class="op">==</span> <span class="str">'POST'</span>:
+        <span class="cmt"># 從表單中獲取名為 'file' 的檔案</span>
+        file <span class="op">=</span> request.files.get(<span class="str">'file'</span>)
+        
+        <span class="kw">if</span> file <span class="kw">and</span> file.filename <span class="op">!=</span> <span class="str">''</span>:
+            <span class="cmt"># secure_filename 可過濾危險字元，確保檔名安全</span>
+            filename <span class="op">=</span> secure_filename(file.filename)
+            filepath <span class="op">=</span> os.path.join(app.config[<span class="str">'UPLOAD_FOLDER'</span>], filename)
+            file.save(filepath) <span class="cmt"># 儲存檔案</span>
+            <span class="kw">return</span> f<span class="str">"檔案 {filename} 上傳成功！"</span>
+            
+    <span class="kw">return</span> render_template_string(<span class="str">'''
+        &lt;form method="POST" enctype="multipart/form-data"&gt;
+            &lt;input type="file" name="file"&gt;
+            &lt;input type="submit" value="上傳"&gt;
+        &lt;/form&gt;
+    '''</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> Session 狀態管理 (簡易登入機制)</h2>
+        <p>HTTP 是無狀態的，為了記住使用者的狀態（例如是否已登入），我們使用 <strong>Session</strong>。Flask 會將 Session 資料加密後儲存在使用者的 Cookie 中。</p>
+
+        <div class="file-header">app_session.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, session, redirect, url_for, request
+
+app <span class="op">=</span> Flask(__name__)
+<span class="cmt"># 使用 Session 必須設定 secret_key 用來加密</span>
+app.secret_key <span class="op">=</span> <span class="str">'your_super_secret_key_here'</span>
+
+@app.route(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">index</span>():
+    <span class="cmt"># 檢查 session 中是否有 'username'</span>
+    <span class="kw">if</span> <span class="str">'username'</span> <span class="kw">in</span> session:
+        <span class="kw">return</span> f<span class="str">"歡迎回來，{session['username']}！ &lt;a href='/logout'&gt;登出&lt;/a&gt;"</span>
+    <span class="kw">return</span> <span class="str">"您尚未登入。 &lt;a href='/login'&gt;登入&lt;/a&gt;"</span>
+
+@app.route(<span class="str">'/login'</span>, methods<span class="op">=</span>[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    <span class="kw">if</span> request.method <span class="op">==</span> <span class="str">'POST'</span>:
+        <span class="cmt"># 模擬帳密驗證成功，將使用者資訊存入 session (類似字典的操作)</span>
+        session[<span class="str">'username'</span>] <span class="op">=</span> request.form.get(<span class="str">'username'</span>)
+        <span class="kw">return</span> redirect(url_for(<span class="str">'index'</span>)) <span class="cmt"># 重新導向回首頁</span>
+        
+    <span class="kw">return</span> <span class="str">'''
+        &lt;form method="POST"&gt;
+            帳號: &lt;input type="text" name="username"&gt;
+            &lt;input type="submit" value="登入"&gt;
+        &lt;/form&gt;
+    '''</span>
+
+@app.route(<span class="str">'/logout'</span>)
+<span class="kw">def</span> <span class="fn">logout</span>():
+    <span class="cmt"># 從 session 中移除 'username'</span>
+    session.pop(<span class="str">'username'</span>, <span class="kw">None</span>)
+    <span class="kw">return</span> redirect(url_for(<span class="str">'index'</span>))
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

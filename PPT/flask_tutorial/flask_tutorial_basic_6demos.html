@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Flask 基礎教學：6 大核心入門範例</title>
+    <style>
+        :root {
+            --primary-color: #2980b9; /* Blue */
+            --secondary-color: #3498db; /* Light Blue */
+            --accent-color: #e74c3c; /* Red for highlights */
+            --bg-color: #f0f4f8;
+            --text-color: #2c3e50;
+            --code-bg: #1e1e1e;
+            --code-color: #d4d4d4;
+            --border-color: #dcdde1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--secondary-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-badge {
+            background-color: var(--secondary-color);
+            color: white;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #e1f0fa;
+            color: #1a5276;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 5px solid var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .file-header {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #1a252f;
+            display: inline-block;
+            width: 100%;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        code {
+            background-color: #e8ecef;
+            color: #c0392b;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #569cd6; font-weight: bold; } /* keyword */
+        .str { color: #ce9178; } /* string */
+        .cmt { color: #6a9955; font-style: italic; } /* comment */
+        .fn { color: #dcdcaa; } /* function */
+        .op { color: #d4d4d4; } /* operator */
+        .num { color: #b5cea8; } /* number */
+        .dec { color: #c586c0; } /* decorator */
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python Flask 基礎教學指南</h1>
+    <p>從零開始：環境建置與 6 大基礎觀念實戰範例</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>環境建置提醒：</strong> 開始之前，請確保您已安裝 Python 並建立虛擬環境。<br>
+        在終端機輸入：<code>pip install Flask</code> 來安裝 Flask 套件。
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 第一個 Flask 應用 (Hello World)</h2>
+        <p>這是所有 Flask 專案的起點。我們會初始化一個 Flask 應用，設定一個路由 (Route)，並啟動伺服器。</p>
+        
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+
+<span class="cmt"># 1. 初始化 Flask 應用程式</span>
+<span class="cmt"># __name__ 代表當前模組名稱，Flask 會用它來尋找資源</span>
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 2. 設定路由 (Route)</span>
+<span class="cmt"># 當使用者訪問網站根目錄 '/' 時，會執行以下函式</span>
+<span class="dec">@app.route</span>(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">hello_world</span>():
+    <span class="kw">return</span> <span class="str">'Hello, Flask World!'</span>
+
+<span class="cmt"># 3. 啟動伺服器</span>
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    <span class="cmt"># 開啟 debug 模式，存檔時會自動重新載入伺服器</span>
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+        <p><strong>測試：</strong> 在終端機執行 <code>python app.py</code>，接著打開瀏覽器前往 <code>http://127.0.0.1:5000/</code>。</p>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 多重路由 (Multiple Routes)</h2>
+        <p>一個網站通常會有多個頁面（例如首頁、關於我們、聯絡我們）。我們可以設定多個不同的 `@app.route()` 來處理。</p>
+
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="dec">@app.route</span>(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">home</span>():
+    <span class="kw">return</span> <span class="str">'這是網站首頁'</span>
+
+<span class="dec">@app.route</span>(<span class="str">'/about'</span>)
+<span class="kw">def</span> <span class="fn">about</span>():
+    <span class="kw">return</span> <span class="str">'這是關於我們的頁面'</span>
+
+<span class="dec">@app.route</span>(<span class="str">'/contact'</span>)
+<span class="kw">def</span> <span class="fn">contact</span>():
+    <span class="kw">return</span> <span class="str">'請撥打客服專線：0800-000-000'</span>
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 動態路由 (URL 參數捕捉)</h2>
+        <p>如果我們有 100 個使用者，不可能寫 100 個路由。動態路由允許我們將網址的一部分當作變數傳入函式中。</p>
+
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 捕捉字串 (預設)</span>
+<span class="dec">@app.route</span>(<span class="str">'/user/&lt;username&gt;'</span>)
+<span class="kw">def</span> <span class="fn">show_user_profile</span>(username):
+    <span class="kw">return</span> f<span class="str">'使用者名稱：{username}'</span>
+
+<span class="cmt"># 捕捉整數 (限制只能輸入數字)</span>
+<span class="dec">@app.route</span>(<span class="str">'/post/&lt;int:post_id&gt;'</span>)
+<span class="kw">def</span> <span class="fn">show_post</span>(post_id):
+    <span class="cmt"># post_id 的型態會是 int</span>
+    <span class="kw">return</span> f<span class="str">'你正在觀看第 {post_id} 篇文章'</span>
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+        <p><strong>測試：</strong> 訪問 <code>http://127.0.0.1:5000/post/42</code>，如果輸入 <code>/post/abc</code> 會得到 404 錯誤，因為 <code>abc</code> 不是整數。</p>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 基礎 HTML 標籤回傳</h2>
+        <p>在學習模板引擎（如 Jinja2）之前，我們可以透過直接回傳 HTML 字串來改變網頁外觀。</p>
+
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="dec">@app.route</span>(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">html_demo</span>():
+    <span class="cmt"># 直接回傳帶有 HTML 標籤的字串，瀏覽器會自動解析它</span>
+    html_content <span class="op">=</span> <span class="str">'''
+        &lt;h1 style="color: blue;"&gt;歡迎來到我的 Flask 網站&lt;/h1&gt;
+        &lt;hr&gt;
+        &lt;p&gt;這是一段簡單的文字介紹。&lt;/p&gt;
+        &lt;ul&gt;
+            &lt;li&gt;項目一&lt;/li&gt;
+            &lt;li&gt;項目二&lt;/li&gt;
+        &lt;/ul&gt;
+    '''</span>
+    <span class="kw">return</span> html_content
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 基礎 HTTP 請求方法 (GET / POST)</h2>
+        <p>預設情況下，瀏覽器訪問網頁都是使用 <strong>GET</strong> 請求。若要處理表單送出的資料，我們需要允許路由接收 <strong>POST</strong> 請求。</p>
+
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 在 methods 參數中宣告此路由允許 GET 與 POST 請求</span>
+<span class="dec">@app.route</span>(<span class="str">'/login'</span>, methods<span class="op">=</span>[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    <span class="kw">if</span> request.method <span class="op">==</span> <span class="str">'POST'</span>:
+        <span class="kw">return</span> <span class="str">'這是一個 POST 請求！(通常發生在表單送出時)'</span>
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="str">'這是一個 GET 請求！(通常發生在直接輸入網址時)'</span>
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 網址重新導向 (Redirect & URL For)</h2>
+        <p>當使用者存取某個舊網址，或是登入成功後，我們通常會將他們自動「重新導向」(Redirect) 到首頁或其他頁面。</p>
+
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, redirect, url_for
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="dec">@app.route</span>(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">home</span>():
+    <span class="kw">return</span> <span class="str">'這裡是網站首頁！'</span>
+
+<span class="cmt"># 假設這是一個舊的路由</span>
+<span class="dec">@app.route</span>(<span class="str">'/old-home'</span>)
+<span class="kw">def</span> <span class="fn">old_home</span>():
+    <span class="cmt"># url_for('home') 會自動尋找名為 'home' 的函式，並產生對應的網址 '/'</span>
+    <span class="cmt"># redirect() 則會將瀏覽器重新導向到該網址</span>
+    <span class="kw">return</span> redirect(url_for(<span class="str">'home'</span>))
+
+<span class="cmt"># 動態路由的重導向寫法</span>
+<span class="dec">@app.route</span>(<span class="str">'/guest'</span>)
+<span class="kw">def</span> <span class="fn">guest</span>():
+    <span class="cmt"># 重導向至 /user/Guest (對應 Demo 3 的 show_user_profile)</span>
+    <span class="kw">return</span> redirect(url_for(<span class="str">'show_user_profile'</span>, username<span class="op">=</span><span class="str">'Guest'</span>))
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

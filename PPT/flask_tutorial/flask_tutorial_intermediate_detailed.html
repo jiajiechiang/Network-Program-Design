@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Flask 中階教學：模板渲染與表單處理</title>
+    <style>
+        :root {
+            --primary-color: #2980b9;
+            --secondary-color: #f39c12;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --code-bg: #282c34;
+            --code-color: #abb2bf;
+            --border-color: #dcdde1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--secondary-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 5px solid #ffeeba;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-left-color: #17a2b8;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        code {
+            background-color: #e9ecef;
+            color: #c7254e;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        .folder-structure {
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre;
+            margin-bottom: 1.5rem;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* 程式碼語法高亮 (簡易版) */
+        .kw { color: #c678dd; } /* keyword */
+        .str { color: #98c379; } /* string */
+        .cmt { color: #7f848e; font-style: italic; } /* comment */
+        .fn { color: #61afef; } /* function */
+        .op { color: #56b6c2; } /* operator */
+        .html-tag { color: #e06c75; }
+        .html-attr { color: #d19a66; }
+        
+        .step-number {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python Flask 中階教學指南</h1>
+    <p>網頁模板 (Jinja2) 與 表單處理 (GET/POST)</p>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>專案資料夾結構 (重要概念)</h2>
+        <div class="alert alert-info">
+            <strong>觀念解析：</strong> 當我們要回傳完整的 HTML 網頁時，將 HTML 程式碼直接寫在 Python 檔中會非常雜亂。Flask 預設使用 <strong>Jinja2</strong> 模板引擎，並會自動到特定的資料夾尋找資源。
+        </div>
+        
+        <p>請在您的專案根目錄下，建立以下的資料夾結構：</p>
+        <div class="folder-structure">my_flask_app/
+│
+├── app.py              (你的主要 Python 程式檔)
+├── templates/          (必須叫這個名字！用來放 HTML 模板)
+│   ├── index.html
+│   └── result.html
+└── static/             (必須叫這個名字！用來放 CSS, JS, 圖片)
+    └── style.css</div>
+    </div>
+
+    <div class="card">
+        <h2>實作範例一：使用 Jinja2 渲染 HTML 模板</h2>
+        <p>Jinja2 允許我們將 Python 變數傳遞到 HTML 中，並且可以在 HTML 裡面使用迴圈和條件判斷。</p>
+        
+        <h3>1. 撰寫 <code>app.py</code></h3>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, render_template
+
+app <span class="op">=</span> Flask(__name__)
+
+@app.route(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">home</span>():
+    <span class="cmt"># 準備要傳遞給 HTML 的資料</span>
+    user_name <span class="op">=</span> <span class="str">'Tony'</span>
+    hobbies <span class="op">=</span> [<span class="str">'閱讀'</span>, <span class="str">'寫程式'</span>, <span class="str">'爬山'</span>]
+    
+    <span class="cmt"># render_template 會去 templates 資料夾找 index.html</span>
+    <span class="cmt"># 並將變數 name 和 hobbies 傳過去</span>
+    <span class="kw">return</span> render_template(<span class="str">'index.html'</span>, name<span class="op">=</span>user_name, hobbies<span class="op">=</span>hobbies)
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+
+        <h3>2. 撰寫 <code>templates/index.html</code></h3>
+        <p>在 HTML 中，使用 <code>{{ 變數名稱 }}</code> 顯示變數，使用 <code>{% 指令 %}</code> 執行迴圈或條件判斷。</p>
+        <pre><code><span class="html-tag">&lt;!DOCTYPE html&gt;</span>
+<span class="html-tag">&lt;html</span> <span class="html-attr">lang</span>=<span class="str">"zh-TW"</span><span class="html-tag">&gt;</span>
+<span class="html-tag">&lt;head&gt;</span>
+    <span class="html-tag">&lt;meta</span> <span class="html-attr">charset</span>=<span class="str">"UTF-8"</span><span class="html-tag">&gt;</span>
+    <span class="html-tag">&lt;title&gt;</span>首頁<span class="html-tag">&lt;/title&gt;</span>
+<span class="html-tag">&lt;/head&gt;</span>
+<span class="html-tag">&lt;body&gt;</span>
+    <span class="html-tag">&lt;h1&gt;</span>哈囉，{{ name }}！歡迎來到首頁。<span class="html-tag">&lt;/h1&gt;</span>
+    
+    <span class="html-tag">&lt;h3&gt;</span>我的興趣列表：<span class="html-tag">&lt;/h3&gt;</span>
+    <span class="html-tag">&lt;ul&gt;</span>
+        <span class="cmt">&lt;!-- 使用 Jinja2 的 for 迴圈 --&gt;</span>
+        {% for hobby in hobbies %}
+            <span class="html-tag">&lt;li&gt;</span>{{ hobby }}<span class="html-tag">&lt;/li&gt;</span>
+        {% endfor %}
+    <span class="html-tag">&lt;/ul&gt;</span>
+<span class="html-tag">&lt;/body&gt;</span>
+<span class="html-tag">&lt;/html&gt;</span></code></pre>
+    </div>
+
+    <div class="card">
+        <h2>實作範例二：表單處理 (GET 與 POST 請求)</h2>
+        <div class="alert">
+            <strong>重要觀念：</strong><br>
+            - <strong>GET 請求：</strong> 預設的網頁請求方式，通常用來「取得」資料（例如載入網頁）。表單若用 GET，資料會顯示在網址列。<br>
+            - <strong>POST 請求：</strong> 用來「提交」資料（例如登入帳號、送出留言）。資料不會顯示在網址列，較為安全。
+        </div>
+
+        <h3>1. 修改 <code>app.py</code> 加入表單路由</h3>
+        <p>我們需要從 <code>flask</code> 匯入 <code>request</code> 物件來接收前端傳來的資料。</p>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, render_template, request
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 允許這個路由接收 GET 與 POST 請求</span>
+@app.route(<span class="str">'/login'</span>, methods<span class="op">=</span>[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    <span class="kw">if</span> request.method <span class="op">==</span> <span class="str">'POST'</span>:
+        <span class="cmt"># 如果是 POST 請求，代表使用者送出了表單</span>
+        <span class="cmt"># 使用 request.form.get('HTML中的name屬性') 取得資料</span>
+        account <span class="op">=</span> request.form.get(<span class="str">'account'</span>)
+        password <span class="op">=</span> request.form.get(<span class="str">'password'</span>)
+        
+        <span class="kw">return</span> render_template(<span class="str">'result.html'</span>, account<span class="op">=</span>account, pwd<span class="op">=</span>password)
+    
+    <span class="kw">else</span>:
+        <span class="cmt"># 如果是 GET 請求，代表使用者剛連進這個網址，我們顯示登入表單給他</span>
+        <span class="kw">return</span> render_template(<span class="str">'login.html'</span>)
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+
+        <h3>2. 建立 <code>templates/login.html</code> (表單頁面)</h3>
+        <pre><code><span class="html-tag">&lt;!DOCTYPE html&gt;</span>
+<span class="html-tag">&lt;html&gt;</span>
+<span class="html-tag">&lt;body&gt;</span>
+    <span class="html-tag">&lt;h2&gt;</span>會員登入系統<span class="html-tag">&lt;/h2&gt;</span>
+    <span class="cmt">&lt;!-- form 的 action 指定要傳送的網址，method 指定使用 POST --&gt;</span>
+    <span class="html-tag">&lt;form</span> <span class="html-attr">action</span>=<span class="str">"/login"</span> <span class="html-attr">method</span>=<span class="str">"POST"</span><span class="html-tag">&gt;</span>
+        <span class="html-tag">&lt;label&gt;</span>帳號：<span class="html-tag">&lt;/label&gt;</span>
+        <span class="cmt">&lt;!-- 這裡的 name 屬性非常重要，後端就是靠它來抓資料 --&gt;</span>
+        <span class="html-tag">&lt;input</span> <span class="html-attr">type</span>=<span class="str">"text"</span> <span class="html-attr">name</span>=<span class="str">"account"</span> <span class="html-attr">required</span><span class="html-tag">&gt;</span> <span class="html-tag">&lt;br&gt;&lt;br&gt;</span>
+        
+        <span class="html-tag">&lt;label&gt;</span>密碼：<span class="html-tag">&lt;/label&gt;</span>
+        <span class="html-tag">&lt;input</span> <span class="html-attr">type</span>=<span class="str">"password"</span> <span class="html-attr">name</span>=<span class="str">"password"</span> <span class="html-attr">required</span><span class="html-tag">&gt;</span> <span class="html-tag">&lt;br&gt;&lt;br&gt;</span>
+        
+        <span class="html-tag">&lt;input</span> <span class="html-attr">type</span>=<span class="str">"submit"</span> <span class="html-attr">value</span>=<span class="str">"登入"</span><span class="html-tag">&gt;</span>
+    <span class="html-tag">&lt;/form&gt;</span>
+<span class="html-tag">&lt;/body&gt;</span>
+<span class="html-tag">&lt;/html&gt;</span></code></pre>
+
+        <h3>3. 建立 <code>templates/result.html</code> (結果頁面)</h3>
+        <pre><code><span class="html-tag">&lt;!DOCTYPE html&gt;</span>
+<span class="html-tag">&lt;html&gt;</span>
+<span class="html-tag">&lt;body&gt;</span>
+    <span class="html-tag">&lt;h2&gt;</span>登入結果<span class="html-tag">&lt;/h2&gt;</span>
+    <span class="html-tag">&lt;p&gt;</span>您輸入的帳號是：<span class="html-tag">&lt;strong&gt;</span>{{ account }}<span class="html-tag">&lt;/strong&gt;&lt;/p&gt;</span>
+    <span class="html-tag">&lt;p&gt;</span>您輸入的密碼是：<span class="html-tag">&lt;strong&gt;</span>{{ pwd }}<span class="html-tag">&lt;/strong&gt;&lt;/p&gt;</span>
+    <span class="html-tag">&lt;br&gt;</span>
+    <span class="html-tag">&lt;a</span> <span class="html-attr">href</span>=<span class="str">"/login"</span><span class="html-tag">&gt;</span>返回登入頁<span class="html-tag">&lt;/a&gt;</span>
+<span class="html-tag">&lt;/body&gt;</span>
+<span class="html-tag">&lt;/html&gt;</span></code></pre>
+
+        <h3>如何測試？</h3>
+        <ol>
+            <li>執行 <code>python app.py</code>。</li>
+            <li>開啟瀏覽器前往 <code>http://127.0.0.1:5000/login</code>，這時觸發的是 <strong>GET</strong> 請求，你會看到登入表單。</li>
+            <li>在表單中輸入帳號與密碼，點擊「登入」。</li>
+            <li>這時網頁會發送 <strong>POST</strong> 請求，Flask 接收到資料後，會將資料傳遞給 <code>result.html</code> 顯示出來！</li>
+        </ol>
+    </div>
+
+</div>
+
+</body>
+</html>

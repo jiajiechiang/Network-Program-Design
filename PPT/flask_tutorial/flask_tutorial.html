@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Flask 從基礎到進階教學指南</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --heading-color: #2c3e50;
+            --accent-color: #3498db;
+            --code-bg: #282c34;
+            --code-color: #abb2bf;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: var(--heading-color);
+            color: #fff;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            background: #fff;
+            padding: 2rem 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: var(--heading-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        h3 {
+            color: var(--heading-color);
+            margin-top: 1.5rem;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+        }
+        code {
+            background-color: #e8e8e8;
+            color: #d35400;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+        ul {
+            margin-bottom: 1rem;
+        }
+        .toc {
+            background: #eef2f5;
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            margin-bottom: 2rem;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .toc ul li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            text-decoration: none;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .highlight { color: #c678dd; } /* keyword */
+        .string { color: #98c379; } /* string */
+        .comment { color: #5c6370; font-style: italic; } /* comment */
+        .func { color: #61afef; } /* function */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python Flask 從基礎到進階教學指南</h1>
+    <p>打造輕量級、高彈性的 Web 應用程式</p>
+</header>
+
+<div class="container">
+    <div class="toc">
+        <h3>目錄</h3>
+        <ul>
+            <li><a href="#intro">一、教學規劃與大綱</a></li>
+            <li><a href="#basic">二、基礎篇：起步與路由</a></li>
+            <li><a href="#intermediate">三、中階篇：模板與表單處理</a></li>
+            <li><a href="#advanced">四、進階篇：RESTful API 與藍圖 (Blueprint)</a></li>
+        </ul>
+    </div>
+
+    <h2 id="intro">一、教學規劃與大綱</h2>
+    <p>Flask 是一個微型 Web 框架 (Micro-framework)，非常適合初學者入門，同時也具備擴展成大型專案的潛力。教學應遵循「先見樹，後見林」的原則：</p>
+    <ul>
+        <li><strong>基礎階段：</strong> 讓學生快速看到畫面，建立成就感。著重於 <code>Routing (路由)</code> 和回傳字串。</li>
+        <li><strong>中階階段：</strong> 引入前端概念，教導 <code>Jinja2 模板引擎</code> 與 <code>GET/POST 請求</code>，達成前後端互動。</li>
+        <li><strong>進階階段：</strong> 進入業界實務，教授 <code>API 開發 (JSON)</code> 與專案架構拆分 <code>Blueprint</code>。</li>
+    </ul>
+
+    <h2 id="basic">二、基礎篇：起步與路由</h2>
+    <p>首先，確保已經安裝 Flask：<code>pip install Flask</code></p>
+    <h3>1. Hello World (最小應用程式)</h3>
+    <pre><code><span class="highlight">from</span> flask <span class="highlight">import</span> Flask
+
+<span class="comment"># 初始化 Flask 應用程式</span>
+app = Flask(__name__)
+
+<span class="comment"># 設定路由 (Route)</span>
+@app.route(<span class="string">'/'</span>)
+<span class="highlight">def</span> <span class="func">hello_world</span>():
+    <span class="highlight">return</span> <span class="string">'Hello, Flask World!'</span>
+
+<span class="highlight">if</span> __name__ == <span class="string">'__main__'</span>:
+    <span class="comment"># 啟動伺服器，開啟除錯模式 (debug=True)</span>
+    app.run(debug=<span class="highlight">True</span>)</code></pre>
+    
+    <h3>2. 動態路由 (Dynamic Routing)</h3>
+    <p>透過 URL 傳遞參數給後端。</p>
+    <pre><code>@app.route(<span class="string">'/user/&lt;username&gt;'</span>)
+<span class="highlight">def</span> <span class="func">show_user_profile</span>(username):
+    <span class="highlight">return</span> f<span class="string">'User: {username}'</span>
+
+@app.route(<span class="string">'/post/&lt;int:post_id&gt;'</span>)
+<span class="highlight">def</span> <span class="func">show_post</span>(post_id):
+    <span class="highlight">return</span> f<span class="string">'Post ID: {post_id}'</span></code></pre>
+
+    <h2 id="intermediate">三、中階篇：模板與表單處理</h2>
+    <h3>1. 渲染 HTML 模板 (Jinja2)</h3>
+    <p>建立一個名為 <code>templates</code> 的資料夾，並在裡面建立 <code>index.html</code>。Flask 會自動去該資料夾尋找。</p>
+    <pre><code><span class="highlight">from</span> flask <span class="highlight">import</span> render_template
+
+@app.route(<span class="string">'/hello/&lt;name&gt;'</span>)
+<span class="highlight">def</span> <span class="func">hello_name</span>(name):
+    <span class="comment"># 將變數 name 傳遞給 index.html 模板</span>
+    <span class="highlight">return</span> render_template(<span class="string">'index.html'</span>, person=name)</code></pre>
+
+    <h3>2. 處理 GET 與 POST 請求</h3>
+    <p>網頁表單送出時最常用到 POST 方法。</p>
+    <pre><code><span class="highlight">from</span> flask <span class="highlight">import</span> request
+
+@app.route(<span class="string">'/login'</span>, methods=[<span class="string">'GET'</span>, <span class="string">'POST'</span>])
+<span class="highlight">def</span> <span class="func">login</span>():
+    <span class="highlight">if</span> request.method == <span class="string">'POST'</span>:
+        username = request.form.get(<span class="string">'username'</span>)
+        password = request.form.get(<span class="string">'password'</span>)
+        <span class="highlight">return</span> f<span class="string">'嘗試登入的帳號：{username}'</span>
+    <span class="highlight">else</span>:
+        <span class="comment"># GET 請求：顯示登入表單畫面</span>
+        <span class="highlight">return</span> <span class="string">'''
+            &lt;form method="post"&gt;
+                帳號: &lt;input type="text" name="username"&gt;&lt;br&gt;
+                密碼: &lt;input type="password" name="password"&gt;&lt;br&gt;
+                &lt;input type="submit" value="登入"&gt;
+            &lt;/form&gt;
+        '''</span></code></pre>
+
+    <h2 id="advanced">四、進階篇：RESTful API 與藍圖 (Blueprint)</h2>
+    <h3>1. 回傳 JSON 資料 (開發 API)</h3>
+    <p>現代 Web 開發常將前後端分離，後端只需提供 JSON 格式的 API。</p>
+    <pre><code><span class="highlight">from</span> flask <span class="highlight">import</span> jsonify
+
+@app.route(<span class="string">'/api/users'</span>)
+<span class="highlight">def</span> <span class="func">get_users</span>():
+    users = [
+        {<span class="string">'id'</span>: 1, <span class="string">'name'</span>: <span class="string">'Alice'</span>, <span class="string">'role'</span>: <span class="string">'Admin'</span>},
+        {<span class="string">'id'</span>: 2, <span class="string">'name'</span>: <span class="string">'Bob'</span>, <span class="string">'role'</span>: <span class="string">'User'</span>}
+    ]
+    <span class="highlight">return</span> jsonify(users)</code></pre>
+
+    <h3>2. Blueprint (模組化大型專案)</h3>
+    <p>當專案變大時，把所有路由寫在同一個檔案會難以維護。Blueprint 允許我們將路由拆分到多個檔案中。</p>
+    <p><strong>auth.py (認證模組):</strong></p>
+    <pre><code><span class="highlight">from</span> flask <span class="highlight">import</span> Blueprint
+
+auth_bp = Blueprint(<span class="string">'auth'</span>, __name__, url_prefix=<span class="string">'/auth'</span>)
+
+@auth_bp.route(<span class="string">'/login'</span>)
+<span class="highlight">def</span> <span class="func">login</span>():
+    <span class="highlight">return</span> <span class="string">"這是登入頁面"</span>
+
+@auth_bp.route(<span class="string">'/logout'</span>)
+<span class="highlight">def</span> <span class="func">logout</span>():
+    <span class="highlight">return</span> <span class="string">"這是登出頁面"</span></code></pre>
+
+    <p><strong>app.py (主程式):</strong></p>
+    <pre><code><span class="highlight">from</span> flask <span class="highlight">import</span> Flask
+<span class="highlight">from</span> auth <span class="highlight">import</span> auth_bp
+
+app = Flask(__name__)
+
+<span class="comment"># 註冊 Blueprint</span>
+app.register_blueprint(auth_bp)
+
+<span class="highlight">if</span> __name__ == <span class="string">'__main__'</span>:
+    app.run(debug=<span class="highlight">True</span>)</code></pre>
+
+</div>
+
+</body>
+</html>
