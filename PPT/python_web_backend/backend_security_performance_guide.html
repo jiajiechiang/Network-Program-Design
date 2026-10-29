@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 後端開發實戰：安全性與效能優化專題指南</title>
+    <style>
+        :root {
+            --primary-color: #20232a;
+            --secondary-color: #61dafb;
+            --accent-color: #ff6b6b;
+            --bg-color: #0b0c10;
+            --text-color: #c5c6c7;
+            --code-bg: #1f2833;
+            --code-color: #66fcf1;
+            --border-color: #45a29e;
+            --card-bg: #1f2833;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--border-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--secondary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #000; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: #ffffff; margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #1a252c; color: #66fcf1; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--border-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid var(--border-color); }
+        .file-header { background-color: #0b0c10; color: #66fcf1; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border: 1px solid var(--border-color); border-bottom: none; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', monospace; font-size: 0.95rem; line-height: 1.5; border: 1px solid var(--border-color); }
+        code { background-color: #0b0c10; color: var(--accent-color); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; border: none; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        .kw { color: #cc7832; font-weight: bold; }
+        .str { color: #a5d6ff; }
+        .cmt { color: #8b949e; font-style: italic; }
+        .fn { color: #d2a8ff; }
+        .dec { color: #ff7b72; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 後端開發專題指南</h1>
+    <p>深度解析：安全性防護 (JWT/Bcrypt) 與高效能優化 (Redis/Celery)</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>專題核心方向：</strong><br>
+        當網站從小型個人專案轉為企業級規模時，<strong>「資安」</strong>與<strong>「效能」</strong>是決定系統生死的兩大關鍵。<br>
+        本份教學將帶領您完整打通 <strong>JWT/Bcrypt</strong> 安全防線，以及透過 <strong>Redis/Celery</strong> 實現十倍效能飆升的架構設計。
+    </div>
+
+    <!-- PART 1: SECURITY -->
+    <div class="card">
+        <h2><span class="demo-badge">Part 1</span> 安全性核心：Bcrypt 密碼雜湊與 JWT 權限驗證</h2>
+        <p>在資安防護中，我們必須遵循兩個黃金原則：<strong>密碼絕對不能明文儲存</strong> [cite: 21]，且 <strong>API 存取必須具備無狀態 (Stateless) 身分驗證</strong> [cite: 21]。以下透過兩個實戰範例展現 Flask 中的具體實作。</p>
+
+        <h3>Demo 1：使用 Flask-Bcrypt 進行安全的密碼加鹽雜湊</h3>
+        <div class="file-header">security_bcrypt.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, jsonify
+<span class="kw">from</span> flask_bcrypt <span class="kw">import</span> Bcrypt
+
+app = Flask(__name__)
+bcrypt = Bcrypt(app)
+
+<span class="cmt"># 模擬資料庫</span>
+user_database = {}
+
+<span class="dec">@app.route</span>(<span class="str">'/api/register'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">register</span>():
+    data = request.json
+    username = data.get(<span class="str">'username'</span>)
+    password = data.get(<span class="str">'password'</span>)
+    
+    <span class="cmt"># 使用 Bcrypt 產生雜湊密碼 (自動加鹽，抗彩虹表攻擊)</span>
+    hashed_pwd = bcrypt.generate_password_hash(password).decode(<span class="str">'utf-8'</span>)
+    user_database[username] = hashed_pwd
+    
+    <span class="kw">return</span> jsonify({<span class="str">"message"</span>: <span class="str">"註冊成功，密碼已受 Bcrypt 保護！"</span>})
+
+<span class="dec">@app.route</span>(<span class="str">'/api/login'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    data = request.json
+    username = data.get(<span class="str">'username'</span>)
+    password = data.get(<span class="str">'password'</span>)
+    
+    stored_hash = user_database.get(username)
+    <span class="cmt"># 比對輸入的明文密碼與資料庫中的雜湊密碼是否相符</span>
+    <span class="kw">if</span> stored_hash <span class="kw">and</span> bcrypt.check_password_hash(stored_hash, password):
+        <span class="kw">return</span> jsonify({<span class="str">"message"</span>: <span class="str">"登入成功！"</span>})
+    
+    <span class="kw">return</span> jsonify({<span class="str">"error"</span>: <span class="str">"帳號或密碼錯誤"</span>}), <span class="num">401</span></code></pre>
+
+        <h3>Demo 2：使用 Flask-JWT-Extended 簽發與驗證 Token</h3>
+        <div class="file-header">security_jwt.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, jsonify
+<span class="kw">from</span> flask_jwt_extended <span class="kw">import</span> (
+    FlaskJWTExtended, create_access_token, jwt_required, get_jwt_identity
+)
+
+app = Flask(__name__)
+app.config[<span class="str">'JWT_SECRET_KEY'</span>] = <span class="str">'your-very-secure-secret-key'</span>
+jwt = FlaskJWTExtended(app)
+
+<span class="dec">@app.route</span>(<span class="str">'/api/token'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">create_token</span>():
+    username = request.json.get(<span class="str">'username'</span>)
+    <span class="cmt"># 假設帳密驗證通過，發放一串具有時效性的 JWT 數位通行證</span>
+    <span class="kw">if</span> username == <span class="str">'admin'</span>:
+        access_token = create_access_token(identity=username)
+        <span class="kw">return</span> jsonify(access_token=access_token)
+    <span class="kw">return</span> jsonify({<span class="str">"error"</span>: <span class="str">"無效的使用者"</span>}), <span class="num">401</span>
+
+<span class="dec">@app.route</span>(<span class="str">'/api/dashboard'</span>, methods=[<span class="str">'GET'</span>])
+<span class="dec">@jwt_required</span>() <span class="cmt"># 必須在 Header 帶上 Authorization: Bearer &lt;token&gt; 才能訪問</span>
+<span class="kw">def</span> <span class="fn">dashboard</span>():
+    current_user = get_jwt_identity() <span class="cmt"># 從 Token 中解碼出使用者身分</span>
+    <span class="kw">return</span> jsonify({<span class="str">"user"</span>: current_user, <span class="str">"data"</span>: <span class="str">"這是高度機密的後台數據"</span>})</code></pre>
+    </div>
+
+    <!-- PART 2: PERFORMANCE -->
+    <div class="card">
+        <h2><span class="demo-badge">Part 2</span> 效能優化核心：Redis 快取快篩與 Celery 非同步任務</h2>
+        <p>當網站面臨大量並行請求時，必須透過 <strong>Redis</strong> 將熱門資料暫存於記憶體 [cite: 21]，並將耗時任務（如寄信、寫檔、大數據運算）交給 <strong>Celery</strong> 丟到背景非同步執行 [cite: 21]，確保主執行緒永不阻塞。</p>
+
+        <h3>Demo 3：利用 Redis 實作 API 查詢結果快取</h3>
+        <div class="file-header">performance_redis.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, jsonify
+<span class="kw">import</span> redis
+<span class="kw">import</span> time
+
+app = Flask(__name__)
+<span class="cmt"># 連線至本地端 Redis 伺服器</span>
+r = redis.Redis(host=<span class="str">'localhost'</span>, port=<span class="num">6379</span>, db=<span class="num">0</span>)
+
+<span class="dec">@app.route</span>(<span class="str">'/api/reports'</span>)
+<span class="kw">def</span> <span class="fn">get_reports</span>():
+    cache_key = <span class="str">"monthly_sales_report"</span>
+    
+    <span class="cmt"># 1. 優先向 Redis 查詢是否有快取資料</span>
+    cached_result = r.get(cache_key)
+    <span class="kw">if</span> cached_result:
+        <span class="kw">return</span> jsonify({<span class="str">"source"</span>: <span class="str">"Redis Cache (秒回)"</span>, <span class="str">"data"</span>: cached_result.decode()})
+        
+    <span class="cmt"># 2. 若無快取，執行耗時的資料庫複雜查詢或運算 (模擬耗時 3 秒)</span>
+    time.sleep(<span class="num">3</span>)
+    heavy_data = <span class="str">"2026年Q1全球銷售總額報表數據..."</span>
+    
+    <span class="cmt"># 3. 將計算結果寫入 Redis，並設定 120 秒後自動過期失效</span>
+    r.setex(cache_key, <span class="num">120</span>, heavy_data)
+    
+    <span class="kw">return</span> jsonify({<span class="str">"source"</span>: <span class="str">"Database Calculation"</span>, <span class="str">"data"</span>: heavy_data})</code></pre>
+        <p><strong>優化效益：</strong>第一次查詢需要等待 3 秒，但接下來 2 分鐘內的所有訪客造訪此 API，都會在 0.01 秒內從 Redis 記憶體直接取得結果！</p>
+
+        <h3>Demo 4：利用 Celery 實作耗時任務背景非同步執行</h3>
+        <div class="file-header">performance_celery.py (Worker 任務定義)</div>
+        <pre><code><span class="kw">from</span> celery <span class="kw">import</span> Celery
+<span class="kw">import</span> time
+
+<span class="cmt"># 初始化 Celery 引擎，使用 Redis 作為訊息佇列 (Broker)</span>
+celery_app = Celery(
+    <span class="str">'tasks'</span>,
+    broker=<span class="str">'redis://localhost:6379/0'</span>,
+    backend=<span class="str">'redis://localhost:6379/0'</span>
+)
+
+<span class="dec">@celery_app.task</span>
+<span class="kw">def</span> <span class="fn">send_welcome_email_task</span>(user_email):
+    <span class="kw">print</span>(f<span class="str">"[{user_email}] 開始在背景執行寄信程序..."</span>)
+    time.sleep(<span class="num">5</span>) <span class="cmt"># 模擬耗時的第三方 SMTP 寄信動作</span>
+    <span class="kw">print</span>(f<span class="str">"[{user_email}] 驗證信件已成功寄出！"</span>)
+    <span class="kw">return</span> <span class="str">"Email Sent"</span></code></pre>
+
+        <div class="file-header">app_trigger.py (Flask 端觸發)</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, jsonify
+<span class="kw">from</span> performance_celery <span class="kw">import</span> send_welcome_email_task
+
+app = Flask(__name__)
+
+<span class="dec">@app.route</span>(<span class="str">'/api/register-user'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">register</span>():
+    <span class="cmt"># ... 執行使用者寫入資料庫的邏輯 ...</span>
+    target_email = <span class="str">"vip_user@example.com"</span>
+    
+    <span class="cmt"># 關鍵：使用 .delay() 丟進任務佇列，Flask 會「毫秒級」直接回傳 Response 給客戶端</span>
+    <span class="cmt"># 實際的 5 秒寄信工作交給背後的 Celery Worker 非同步默默處理！</span>
+    send_welcome_email_task.delay(target_email)
+    
+    <span class="kw">return</span> jsonify({<span class="str">"message"</span>: <span class="str">"註冊成功！系統已在背景為您發送歡迎信。"</span>})</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

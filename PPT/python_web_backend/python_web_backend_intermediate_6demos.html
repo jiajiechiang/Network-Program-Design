@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網頁後端中階教學：6 大核心架站實戰</title>
+    <style>
+        :root {
+            --primary-color: #4b4b8f; /* Indigo */
+            --secondary-color: #6c5ce7; /* Light Indigo */
+            --accent-color: #fdcb6e; /* Yellow */
+            --bg-color: #f3f4f6;
+            --text-color: #2d3436;
+            --code-bg: #282a36; /* Dracula Theme */
+            --code-color: #f8f8f2;
+            --border-color: #dfe6e9;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 6px 12px rgba(0,0,0,0.08); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--primary-color); border-bottom: 2px solid var(--secondary-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: var(--primary-color); margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #eef2fa; color: #2c3e50; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; }
+        .file-header { background-color: #1e1e24; color: #a0aabf; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border-bottom: 1px solid #000; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; }
+        code { background-color: #eaeded; color: #c0392b; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #ff79c6; font-weight: bold; } /* keyword */
+        .str { color: #f1fa8c; } /* string */
+        .cmt { color: #6272a4; font-style: italic; } /* comment */
+        .fn { color: #50fa7b; } /* function */
+        .dec { color: #50fa7b; } /* decorator */
+        .jinja { color: #ffb86c; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網頁後端中階教學</h1>
+    <p>打造現代化網站：會員系統、模組化與資料關聯 6 大實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>中階後端開發準備：</strong><br>
+        基礎篇我們學會了路由與基礎的 HTML 渲染。中階篇我們將面對真實專案的挑戰，包含：重複版面的處理、使用者登入狀態管理、安全的檔案上傳，以及專案模組化。<br><br>
+        為了處理表單驗證，請在終端機安裝：<code>pip install Flask-WTF</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> Jinja2 模板繼承 (Template Inheritance)</h2>
+        <p>每個網頁都有共同的導覽列 (Navbar) 與頁尾 (Footer)。使用「模板繼承」就能把共同部分寫在 <code>base.html</code>，其他頁面只需填入不同內容。</p>
+        
+        <div class="file-header">templates/base.html (父模板)</div>
+        <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;我的中階網站&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;nav&gt;&lt;a href="/"&gt;首頁&lt;/a&gt; | &lt;a href="/about"&gt;關於我們&lt;/a&gt;&lt;/nav&gt;
+    &lt;hr&gt;
+    
+    <span class="cmt">&lt;!-- 挖出一個名為 content 的洞，讓子模板來填補 --&gt;</span>
+    <span class="jinja">{% block content %}{% endblock %}</span>
+    
+    &lt;hr&gt;
+    &lt;footer&gt;版權所有 © 2026&lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+        <div class="file-header">templates/index.html (子模板)</div>
+        <pre><code><span class="cmt">&lt;!-- 宣告繼承 base.html --&gt;</span>
+<span class="jinja">{% extends "base.html" %}</span>
+
+<span class="cmt">&lt;!-- 將內容填入 content 區塊 --&gt;</span>
+<span class="jinja">{% block content %}</span>
+    &lt;h2&gt;這裡是首頁內容&lt;/h2&gt;
+    &lt;p&gt;這段文字會自動被放入 base.html 的中間！&lt;/p&gt;
+<span class="jinja">{% endblock %}</span></code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 表單驗證與 CSRF 防護 (Flask-WTF)</h2>
+        <p>手刻 HTML 表單很容易有安全漏洞 (如 CSRF 攻擊)。使用 <code>Flask-WTF</code> 可以用 Python 類別定義表單，並自動進行嚴格的格式驗證與安全防護。</p>
+
+        <div class="file-header">forms.py</div>
+        <pre><code><span class="kw">from</span> flask_wtf <span class="kw">import</span> FlaskForm
+<span class="kw">from</span> wtforms <span class="kw">import</span> StringField, PasswordField, SubmitField
+<span class="kw">from</span> wtforms.validators <span class="kw">import</span> DataRequired, Length
+
+<span class="kw">class</span> LoginForm(FlaskForm):
+    <span class="cmt"># 定義帳號欄位，設定必填 (DataRequired) 與長度限制</span>
+    username = StringField(<span class="str">'帳號'</span>, validators=[DataRequired(), Length(min=4, max=20)])
+    password = PasswordField(<span class="str">'密碼'</span>, validators=[DataRequired()])
+    submit = SubmitField(<span class="str">'登入'</span>)</code></pre>
+
+        <div class="file-header">app.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, render_template
+<span class="kw">from</span> forms <span class="kw">import</span> LoginForm
+
+app = Flask(__name__)
+app.config[<span class="str">'SECRET_KEY'</span>] = <span class="str">'your_secret_key_here'</span> <span class="cmt"># WTF 表單需要密鑰防護</span>
+
+<span class="dec">@app.route</span>(<span class="str">'/login'</span>, methods=[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    form = LoginForm()
+    <span class="kw">if</span> form.validate_on_submit(): <span class="cmt"># 若是 POST 且通過所有驗證</span>
+        user = form.username.data
+        <span class="kw">return</span> f<span class="str">"歡迎登入，{user}！"</span>
+    <span class="kw">return</span> render_template(<span class="str">'login.html'</span>, form=form)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 使用者登入狀態管理 (Session)</h2>
+        <p>HTTP 協定本身沒有記憶功能。為了記住「使用者已登入」，後端會將資訊存入 <code>session</code> 字典，Flask 會自動將其加密並存在使用者的瀏覽器 Cookie 中。</p>
+
+        <div class="file-header">app_session.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, session, redirect, url_for, request
+
+app = Flask(__name__)
+app.secret_key = <span class="str">'super_secret_key'</span> <span class="cmt"># Session 必須要有 secret_key 進行加密</span>
+
+<span class="dec">@app.route</span>(<span class="str">'/login'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    <span class="cmt"># 假設帳密驗證成功，將使用者名稱存入 session</span>
+    session[<span class="str">'username'</span>] = request.form.get(<span class="str">'username'</span>)
+    <span class="kw">return</span> redirect(url_for(<span class="str">'dashboard'</span>))
+
+<span class="dec">@app.route</span>(<span class="str">'/dashboard'</span>)
+<span class="kw">def</span> <span class="fn">dashboard</span>():
+    <span class="cmt"># 檢查 session 中是否有 username，判斷是否登入</span>
+    <span class="kw">if</span> <span class="str">'username'</span> <span class="kw">in</span> session:
+        <span class="kw">return</span> f<span class="str">"這是你的專屬後台，{session['username']}！"</span>
+    <span class="kw">return</span> <span class="str">"請先登入！"</span>, 401
+
+<span class="dec">@app.route</span>(<span class="str">'/logout'</span>)
+<span class="kw">def</span> <span class="fn">logout</span>():
+    <span class="cmt"># 登出就是把資料從 session 中移除</span>
+    session.pop(<span class="str">'username'</span>, None)
+    <span class="kw">return</span> <span class="str">"已成功登出。"</span></code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 資料庫關聯：一對多 (One-to-Many)</h2>
+        <p>在進階的資料庫設計中，資料表通常會互相「關聯」。例如：一個「使用者 (User)」可以擁有「多篇文章 (Post)」。</p>
+
+        <div class="file-header">models.py (搭配 Flask-SQLAlchemy)</div>
+        <pre><code><span class="kw">from</span> flask_sqlalchemy <span class="kw">import</span> SQLAlchemy
+
+db = SQLAlchemy()
+
+<span class="kw">class</span> User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), nullable=False)
+    <span class="cmt"># 建立關聯 (一對多)，backref 讓 Post 可以反向查出作者</span>
+    posts = db.relationship(<span class="str">'Post'</span>, backref=<span class="str">'author'</span>, lazy=True)
+
+<span class="kw">class</span> Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=False)
+    <span class="cmt"># 外鍵 (Foreign Key)，連結到 user 資料表的 id 欄位</span>
+    user_id = db.Column(db.Integer, db.ForeignKey(<span class="str">'user.id'</span>), nullable=False)
+
+<span class="cmt"># 使用方式範例：</span>
+<span class="cmt"># author = User.query.first()</span>
+<span class="cmt"># 取得該作者所有文章：author.posts</span>
+<span class="cmt"># 取得某篇文章的作者：post.author.username</span></code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 安全的檔案上傳 (File Upload)</h2>
+        <p>接收使用者上傳的圖片或文件，我們必須使用 <code>secure_filename</code> 過濾檔名，避免駭客透過檔名漏洞 (如 `../../../script.sh`) 攻擊伺服器。</p>
+
+        <div class="file-header">app_upload.py</div>
+        <pre><code><span class="kw">import</span> os
+<span class="kw">from</span> flask <span class="kw">import</span> Flask, request
+<span class="kw">from</span> werkzeug.utils <span class="kw">import</span> secure_filename
+
+app = Flask(__name__)
+app.config[<span class="str">'UPLOAD_FOLDER'</span>] = <span class="str">'./uploads'</span> <span class="cmt"># 設定上傳目錄</span>
+os.makedirs(app.config[<span class="str">'UPLOAD_FOLDER'</span>], exist_ok=True)
+
+<span class="dec">@app.route</span>(<span class="str">'/upload'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">upload_file</span>():
+    <span class="cmt"># 從表單接收名為 'file' 的檔案</span>
+    <span class="kw">if</span> <span class="str">'file'</span> <span class="kw">not in</span> request.files:
+        <span class="kw">return</span> <span class="str">'沒有上傳檔案'</span>
+        
+    file = request.files[<span class="str">'file'</span>]
+    <span class="kw">if</span> file.filename != <span class="str">''</span>:
+        <span class="cmt"># 將中文或危險字元過濾，確保檔名安全</span>
+        safe_name = secure_filename(file.filename)
+        save_path = os.path.join(app.config[<span class="str">'UPLOAD_FOLDER'</span>], safe_name)
+        
+        file.save(save_path) <span class="cmt"># 將檔案存入伺服器硬碟</span>
+        <span class="kw">return</span> f<span class="str">"檔案 {safe_name} 上傳成功！"</span></code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 藍圖 (Blueprints)：大型專案模組化</h2>
+        <p>如果把所有路由 (Route) 都寫在同一個 <code>app.py</code> 裡，程式碼會變得難以維護。<strong>Blueprint</strong> 允許我們將後端拆分成「會員模組」、「購物車模組」等不同檔案。</p>
+
+        <div class="file-header">auth_bp.py (會員模組)</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Blueprint
+
+<span class="cmt"># 建立 Blueprint 實例，url_prefix 讓這個模組下的路由都會自動加上 /auth 前綴</span>
+auth = Blueprint(<span class="str">'auth'</span>, __name__, url_prefix=<span class="str">'/auth'</span>)
+
+<span class="dec">@auth.route</span>(<span class="str">'/login'</span>)
+<span class="kw">def</span> <span class="fn">login</span>():
+    <span class="kw">return</span> <span class="str">"這裡是會員登入頁面 (實際網址為 /auth/login)"</span></code></pre>
+
+        <div class="file-header">app.py (主程式)</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+<span class="kw">from</span> auth_bp <span class="kw">import</span> auth <span class="cmt"># 匯入寫好的藍圖</span>
+
+app = Flask(__name__)
+
+<span class="cmt"># 將藍圖註冊到主程式中</span>
+app.register_blueprint(auth)
+
+<span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:
+    app.run()</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

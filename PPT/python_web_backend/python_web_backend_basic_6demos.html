@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網頁後端基礎教學：6 大核心架站實戰</title>
+    <style>
+        :root {
+            --primary-color: #2b5b84; /* Tech Blue */
+            --secondary-color: #3498db; /* Light Blue */
+            --accent-color: #e67e22; /* Orange */
+            --bg-color: #f0f4f8;
+            --text-color: #2c3e50;
+            --code-bg: #1e1e1e;
+            --code-color: #d4d4d4;
+            --border-color: #d1d8e0;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--primary-color); border-bottom: 2px solid var(--secondary-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: var(--primary-color); margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #e8f4f8; color: #1f618d; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; }
+        .file-header { background-color: #2c3e50; color: #ecf0f1; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border-bottom: 1px solid #1a252f; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; }
+        code { background-color: #eaeded; color: #c0392b; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #569cd6; font-weight: bold; } /* keyword */
+        .str { color: #ce9178; } /* string */
+        .cmt { color: #6a9955; font-style: italic; } /* comment */
+        .fn { color: #dcdcaa; } /* function */
+        .dec { color: #c586c0; } /* decorator */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網頁後端基礎教學</h1>
+    <p>從零開始架設網站：伺服器、路由、靜態檔案與 API 的 6 大實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>什麼是網頁後端？</strong><br>
+        後端 (Backend) 就像是餐廳的廚房，負責接收客人 (瀏覽器) 的點單 (Request)，處理食材 (資料庫邏輯)，最後把餐點 (HTML 或 JSON) 送回給客人 (Response)。<br><br>
+        我們將使用 Python 最經典的輕量級後端框架 <strong>Flask</strong> 來實作。請在終端機輸入：<code>pip install Flask</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 啟動伺服器與基礎路由 (Routing)</h2>
+        <p>架設網站的第一步是啟動一台伺服器，並告訴伺服器當使用者輸入特定網址 (例如 "/") 時，應該回傳什麼內容給他。</p>
+        
+        <div class="file-header">app_basic.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+
+<span class="cmt"># 初始化後端應用程式</span>
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 建立路由：當使用者造訪根目錄 '/' 時，觸發此函式</span>
+<span class="dec">@app.route</span>(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">home</span>():
+    <span class="kw">return</span> <span class="str">"歡迎來到我的 Python 後端網站！"</span>
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    <span class="cmt"># 啟動伺服器，port 預設為 5000</span>
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 動態網址與 URL 參數</h2>
+        <p>實務上我們不可能為每一個使用者寫一個路由。透過動態路由，我們可以捕捉網址中的變數，並交由 Python 處理。</p>
+
+        <div class="file-header">app_dynamic.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 捕捉字串：&lt;username&gt; 將作為參數傳入函式</span>
+<span class="dec">@app.route</span>(<span class="str">'/profile/&lt;username&gt;'</span>)
+<span class="kw">def</span> <span class="fn">user_profile</span>(username):
+    <span class="kw">return</span> f<span class="str">"這是 {username} 的個人首頁"</span>
+
+<span class="cmt"># 捕捉整數：&lt;int:product_id&gt;，確保傳入的是數字格式</span>
+<span class="dec">@app.route</span>(<span class="str">'/item/&lt;int:product_id&gt;'</span>)
+<span class="kw">def</span> <span class="fn">show_item</span>(product_id):
+    <span class="kw">return</span> f<span class="str">"您正在查看商品編號：{product_id}"</span>
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 後端與前端結合：回傳 HTML 網頁</h2>
+        <p>後端不只回傳純文字，還能把寫好的 HTML 網頁丟給瀏覽器。我們使用 <code>render_template</code> 將 Python 變數傳入 HTML 中動態顯示。</p>
+
+        <div class="file-header">app_template.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, render_template
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="dec">@app.route</span>(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="fn">index</span>():
+    <span class="cmt"># 將變數 name 傳遞給 index.html</span>
+    <span class="kw">return</span> render_template(<span class="str">'index.html'</span>, name<span class="op">=</span><span class="str">"Python 新手"</span>)</code></pre>
+        
+        <div class="file-header">templates/index.html (必須放在 templates 資料夾下)</div>
+        <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;body&gt;
+    &lt;h1&gt;哈囉，{{ name }}！&lt;/h1&gt;
+    &lt;p&gt;這是由 Python 後端產生出來的網頁。&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 提供靜態檔案 (CSS, JS, 圖片)</h2>
+        <p>網頁需要排版與圖片。在後端框架中，靜態檔案不能隨便放，必須放在名為 <code>static</code> 的資料夾中，並透過特殊的網址來載入。</p>
+
+        <div class="file-header">templates/style_demo.html</div>
+        <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    <span class="cmt">&lt;!-- 使用 url_for 動態生成靜態檔案的網址 --&gt;</span>
+    &lt;link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h2&gt;載入靜態資源範例&lt;/h2&gt;
+    <span class="cmt">&lt;!-- 載入 static/images/logo.png --&gt;</span>
+    &lt;img src="{{ url_for('static', filename='images/logo.png') }}"&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 接收前端資料：處理 GET 與 POST 表單</h2>
+        <p>當使用者填寫登入表單或搜尋框時，資料會傳給後端。<strong>GET</strong> 用於一般查詢 (資料在網址上)，<strong>POST</strong> 用於隱密提交 (如密碼)。</p>
+
+        <div class="file-header">app_form.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, render_template
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 允許這個路由接收 GET 與 POST 請求</span>
+<span class="dec">@app.route</span>(<span class="str">'/login'</span>, methods<span class="op">=</span>[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    <span class="kw">if</span> request.method <span class="op">==</span> <span class="str">'POST'</span>:
+        <span class="cmt"># 處理前端傳來的 POST 表單資料</span>
+        user_account <span class="op">=</span> request.form.get(<span class="str">'account'</span>)
+        user_pwd <span class="op">=</span> request.form.get(<span class="str">'password'</span>)
+        <span class="kw">return</span> f<span class="str">"後端已收到帳號：{user_account}，密碼：{user_pwd}"</span>
+    
+    <span class="cmt"># 如果是 GET 請求，就回傳一個登入表單網頁給他</span>
+    <span class="kw">return</span> <span class="str">"""
+        &lt;form method="POST"&gt;
+            帳號: &lt;input type="text" name="account"&gt;&lt;br&gt;
+            密碼: &lt;input type="password" name="password"&gt;&lt;br&gt;
+            &lt;input type="submit" value="登入"&gt;
+        &lt;/form&gt;
+    """</span></code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 打造 RESTful API：回傳 JSON 資料</h2>
+        <p>現代網頁很多是「前後端分離」(例如前端用 React/Vue，手機用 iOS App)。後端不再回傳 HTML，而是回傳純資料 <strong>JSON</strong> 格式，這種服務稱為 API。</p>
+
+        <div class="file-header">app_api.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, jsonify
+
+app <span class="op">=</span> Flask(__name__)
+
+<span class="cmt"># 模擬資料庫裡的資料</span>
+users_db <span class="op">=</span> [
+    {<span class="str">"id"</span>: <span class="num">1</span>, <span class="str">"name"</span>: <span class="str">"Alice"</span>, <span class="str">"role"</span>: <span class="str">"Admin"</span>},
+    {<span class="str">"id"</span>: <span class="num">2</span>, <span class="str">"name"</span>: <span class="str">"Bob"</span>, <span class="str">"role"</span>: <span class="str">"User"</span>}
+]
+
+<span class="dec">@app.route</span>(<span class="str">'/api/users'</span>)
+<span class="kw">def</span> <span class="fn">get_users_api</span>():
+    <span class="cmt"># 使用 jsonify 將 Python 字典轉換成標準的 JSON 格式回傳</span>
+    <span class="kw">return</span> jsonify({
+        <span class="str">"status"</span>: <span class="str">"success"</span>,
+        <span class="str">"total_count"</span>: len(users_db),
+        <span class="str">"data"</span>: users_db
+    })
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">'__main__'</span>:
+    app.run(debug<span class="op">=</span><span class="kw">True</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網頁後端進階教學：6 大企業級架站實戰</title>
+    <style>
+        :root {
+            --primary-color: #1a1a2e; /* Deep Navy */
+            --secondary-color: #e94560; /* Neon Pink/Red */
+            --accent-color: #0f3460; /* Dark Blue */
+            --bg-color: #0f1016;
+            --text-color: #e2e8f0;
+            --code-bg: #161622;
+            --code-color: #f8f8f2;
+            --border-color: #2d3748;
+            --card-bg: #1a1b26;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--secondary-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); padding: 2.5rem; margin-bottom: 2.5rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--secondary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        .demo-badge { background-color: var(--secondary-color); color: #fff; font-size: 0.9rem; padding: 0.3rem 0.8rem; border-radius: 20px; margin-right: 1rem; font-weight: bold; white-space: nowrap; }
+        h3 { color: #ffffff; margin: 1.5rem 0 1rem 0; font-size: 1.2rem; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #161824; color: #a0aec0; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--secondary-color); margin-bottom: 2rem; font-size: 1.05rem; border: 1px solid var(--border-color); }
+        .alert strong { color: var(--secondary-color); }
+        .file-header { background-color: #0b0c10; color: #7f8c8d; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border: 1px solid var(--border-color); border-bottom: none; display: inline-block; width: 100%; margin-top: 1rem; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5; border: 1px solid var(--border-color); }
+        code { background-color: #2d3748; color: #ff79c6; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; border: none; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        /* Syntax Highlighting */
+        .kw { color: #ff79c6; font-weight: bold; } /* keyword */
+        .str { color: #f1fa8c; } /* string */
+        .cmt { color: #6272a4; font-style: italic; } /* comment */
+        .fn { color: #50fa7b; } /* function */
+        .dec { color: #ffb86c; } /* decorator */
+        .cls { color: #8be9fd; font-style: italic; } /* class */
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網頁後端進階教學</h1>
+    <p>打造企業級網站：安全驗證、API 封裝、非同步與日誌管理 6 大實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>進階後端開發挑戰：</strong><br>
+        進階篇我們將面對真實企業環境的需求：密碼加密雜湊、使用 JWT 建立無狀態 API 安全驗證、整合 Redis 快取、使用 Celery 處理背景任務、資料庫遷移管理 (Flask-Migrate)，以及結構化日誌 (Logging)。<br><br>
+        建議安裝套件：<code>pip install Flask-JWT-Extended Flask-Migrate Flask-Bcrypt celery redis</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 密碼安全加密：使用 Flask-Bcrypt</h2>
+        <p>絕對不能把使用者密碼用明文存進資料庫！我們必須使用 <strong>Bcrypt</strong> 演算法進行雜湊 (Hashing) 與加鹽 (Salting)，確保即使資料庫外洩，密碼也不會被破解。</p>
+        
+        <div class="file-header">app_bcrypt.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, jsonify
+<span class="kw">from</span> flask_bcrypt <span class="kw">import</span> Bcrypt
+
+app = Flask(__name__)
+bcrypt = Bcrypt(app)
+
+<span class="cmt"># 模擬資料庫儲存雜湊後的密碼</span>
+fake_db = {}
+
+<span class="dec">@app.route</span>(<span class="str">'/register'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">register</span>():
+    username = request.json.get(<span class="str">'username'</span>)
+    password = request.json.get(<span class="str">'password'</span>)
+    
+    <span class="cmt"># 1. 將密碼進行雜湊加密</span>
+    hashed_password = bcrypt.generate_password_hash(password).decode(<span class="str">'utf-8'</span>)
+    fake_db[username] = hashed_password
+    
+    <span class="kw">return</span> jsonify({<span class="str">"message"</span>: <span class="str">"註冊成功，密碼已安全加密！"</span>})
+
+<span class="dec">@app.route</span>(<span class="str">'/login'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    username = request.json.get(<span class="str">'username'</span>)
+    password = request.json.get(<span class="str">'password'</span>)
+    
+    stored_hash = fake_db.get(username)
+    <span class="kw">if</span> stored_hash <span class="kw">and</span> bcrypt.check_password_hash(stored_hash, password):
+        <span class="kw">return</span> jsonify({<span class="str">"message"</span>: <span class="str">"登入成功！密碼驗證通過。"</span>})
+        
+    <span class="kw">return</span> jsonify({<span class="str">"error"</span>: <span class="str">"帳號或密碼錯誤"</span>}), 401</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 無狀態 API 安全：JWT 驗證 (Flask-JWT-Extended)</h2>
+        <p>在現代前後端分離或 App 開發中，伺服器不保存 Session，而是發放 <strong>JWT (JSON Web Token)</strong> 給客戶端。客戶端之後每次請求只要帶上這張「數位通行證」即可。</p>
+
+        <div class="file-header">app_jwt.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, jsonify
+<span class="kw">from</span> flask_jwt_extended <span class="kw">import</span> (
+    FlaskJWTExtended, create_access_token, jwt_required, get_jwt_identity
+)
+
+app = Flask(__name__)
+app.config[<span class="str">'JWT_SECRET_KEY'</span>] = <span class="str">'super-secret-jwt-key'</span> <span class="cmt"># 簽章密鑰</span>
+jwt = FlaskJWTExtended(app)
+
+<span class="dec">@app.route</span>(<span class="str">'/api/login'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">api_login</span>():
+    username = request.json.get(<span class="str">'username'</span>)
+    <span class="cmt"># 假設驗證成功...</span>
+    <span class="kw">if</span> username == <span class="str">'admin'</span>:
+        <span class="cmt"># 產生 JWT Token (可將使用者身分包在裡面)</span>
+        access_token = create_access_token(identity=username)
+        <span class="kw">return</span> jsonify(access_token=access_token)
+    <span class="kw">return</span> jsonify({<span class="str">"msg"</span>: <span class="str">"Bad username"</span>}), 401
+
+<span class="dec">@app.route</span>(<span class="str">'/api/protected'</span>, methods=[<span class="str">'GET'</span>])
+<span class="dec">@jwt_required</span>() <span class="cmt"># 加上這個裝飾器，代表必須帶有有效的 JWT 才能訪問</span>
+<span class="kw">def</span> <span class="fn">protected</span>():
+    current_user = get_jwt_identity() <span class="cmt"># 取得當前 Token 內的使用者身分</span>
+    <span class="kw">return</span> jsonify(logged_in_as=current_user, message=<span class="str">"成功訪問受保護的 API 資源！"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 資料庫版本控制：Flask-Migrate (Alembic)</h2>
+        <p>當專案上線後，如果資料庫需要「新增欄位」(例如使用者多出 `age` 欄位)，直接刪除重建資料庫會導致舊用戶資料遺失。使用 <strong>Flask-Migrate</strong> 可以像 Git 一樣管理資料庫結構的每次異動。</p>
+
+        <div class="file-header">app_migrate.py 與終端機指令</div>
+        <pre><code><span class="cmt"># 1. 在 app.py 中初始化 Migrate</span>
+<span class="kw">from</span> flask <span class="kw">import</span> Flask
+<span class="kw">from</span> flask_sqlalchemy <span class="kw">import</span> SQLAlchemy
+<span class="kw">from</span> flask_migrate <span class="kw">import</span> Migrate
+
+app = Flask(__name__)
+app.config[<span class="str">'SQLALCHEMY_DATABASE_URI'</span>] = <span class="str">'sqlite:///app.db'</span>
+db = SQLAlchemy(app)
+migrate = Migrate(app, db) <span class="cmt"># 綁定 Migrate</span>
+
+<span class="kw">class</span> <span class="cls">User</span>(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    <span class="cmt"># 之後若新增欄位：age = db.Column(db.Integer)</span>
+
+<span class="cmt"># 2. 在終端機執行的指令 (Command Line)：</span>
+<span class="cmt"># flask db init    (初始化遷移資料夾，只需執行一次)</span>
+<span class="cmt"># flask db migrate -m "Add user table" (偵測模型改變，自動產生遷移檔)</span>
+<span class="cmt"># flask db upgrade (將變更真正套用到資料庫中)</span></code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 效能加速：整合 Redis 快取機制</h2>
+        <p>高流量網站不能每次都查詢資料庫。我們透過 <strong>Redis</strong> 記憶體資料庫，將運算結果或查詢結果暫存起來，大幅降低後端與資料庫的負擔。</p>
+
+        <div class="file-header">app_redis.py</div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Flask, jsonify
+<span class="kw">import</span> redis
+<span class="kw">import</span> time
+
+app = Flask(__name__)
+<span class="cmt># 連線到本地端 Redis 伺服器</span>
+r = redis.Redis(host=<span class="str">'localhost'</span>, port=<span class="num">6379</span>, db=<span class="num">0</span>)
+
+<span class="dec">@app.route</span>(<span class="str">'/api/expensive-data'</span>)
+<span class="kw">def</span> <span class="fn">expensive_data</span>():
+    cache_key = <span class="str">"heavy_computation_result"</span>
+    
+    <span class="cmt"># 1. 先檢查 Redis 裡面有沒有快取</span>
+    cached_data = r.get(cache_key)
+    <span class="kw">if</span> cached_data:
+        <span class="kw">return</span> jsonify({<span class="str">"source"</span>: <span class="str">"Redis Cache"</span>, <span class="str">"data"</span>: cached_data.decode()})
+        
+    <span class="cmt"># 2. 若沒有快取，模擬進行非常耗時的運算 (例如查複雜報表)</span>
+    time.sleep(<span class="num">3</span>)
+    result = <span class="str">"這是耗時 3 秒計算出來的精確報表數據"</span>
+    
+    <span class="cmt"># 3. 將結果存入 Redis，並設定 60 秒後自動過期 (EX=60)</span>
+    r.setex(cache_key, <span class="num">60</span>, result)
+    
+    <span class="kw">return</span> jsonify({<span class="str">"source"</span>: <span class="str">"Database / Compute"</span>, <span class="str">"data"</span>: result})</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 非同步背景任務：Celery 任務佇列</h2>
+        <p>當網站需要處理「寄送大量 EDM」、「產生 PDF 報表」等會讓 HTTP 請求逾時的任務時，必須交給 <strong>Celery</strong> 放到背景非同步執行。</p>
+
+        <div class="file-header">tasks.py (Celery Worker)</div>
+        <pre><code><span class="kw">from</span> celery <span class="kw">import</span> Celery
+<span class="kw">import</span> time
+
+<span class="cmt"># 初始化 Celery，使用 Redis 作為訊息代理 (Broker)</span>
+celery_app = Celery(
+    <span class="str">'tasks'</span>,
+    broker=<span class="str">'redis://localhost:6379/0'</span>,
+    backend=<span class="str">'redis://localhost:6379/0'</span>
+)
+
+<span class="dec">@celery_app.task</span>
+<span class="kw">def</span> <span class="fn">generate_heavy_report</span>(user_id):
+    <span class="kw">print</span>(f<span class="str">"開始為使用者 {user_id} 產生大型報表..."</span>)
+    time.sleep(<span class="num">10</span>) <span class="cmt"># 模擬耗時 10 秒的運算</span>
+    <span class="kw">print</span>(f<span class="str">"報表產生完畢，已發送通知信給使用者 {user_id}"</span>)
+    <span class="kw">return</span> <span class="str">"Report Ready"</span>
+
+<span class="cmt"># 在 Flask 主程式中呼叫方式：</span>
+<span class="cmt"># from tasks import generate_heavy_report</span>
+<span class="cmt"># generate_heavy_report.delay(user_id=42)  # .delay() 會立即返回，任務在背景執行</span></code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 企業級日誌管理 (Structured Logging)</h2>
+        <p>正式環境絕對不能只用 `print()`。我們必須使用 Python 內建的 <code>logging</code> 模組，將系統錯誤、警告與訪問紀錄自動寫入日誌檔案，方便後續除錯與監控。</p>
+
+        <div class="file-header">app_logging.py</div>
+        <pre><code><span class="kw">import</span> logging
+<span class="kw">from</span> logging.handlers <span class="kw">import</span> RotatingFileHandler
+<span class="kw">from</span> flask <span class="kw">import</span> Flask
+
+app = Flask(__name__)
+
+<span class="cmt"># 設定日誌格式與寫入檔案 (設定檔案最大 1MB，最多保留 3 個備份檔)</span>
+handler = RotatingFileHandler(<span class="str">'app.log'</span>, maxBytes=<span class="num">1024</span>*<span class="num">1024</span>, backupCount=<span class="num">3</span>)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter(<span class="str">'[%(asctime)s] %(levelname)s in %(module)s: %(message)s'</span>)
+handler.setFormatter(formatter)
+
+app.logger.addHandler(handler)
+app.logger.setLevel(logging.INFO)
+
+<span class="dec">@app.route</span>(<span class="str">'/do-something'</span>)
+<span class="kw">def</span> <span class="fn">do_something</span>():
+    app.logger.info(<span class="str">"使用者訪問了 /do-something 路由"</span>)
+    <span class="kw">try</span>:
+        <span class="cmt"># 模擬業務邏輯</span>
+        result = <span class="num">10</span> / <span class="num">2</span>
+        <span class="kw">return</span> f<span class="str">"計算結果：{result}"</span>
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        app.logger.error(f<span class="str">"系統發生嚴重錯誤：{e}"</span>, exc_info=<span class="kw">True</span>)
+        <span class="kw">return</span> <span class="str">"伺服器內部錯誤"</span>, <span class="num">500</span></code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>
