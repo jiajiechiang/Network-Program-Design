@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路爬蟲基礎教學：6 大核心入門範例</title>
+    <style>
+        :root {
+            --primary-color: #d35400; /* Dark Orange */
+            --secondary-color: #e67e22; /* Orange */
+            --accent-color: #2980b9; /* Blue for contrast */
+            --bg-color: #fdfbf7;
+            --text-color: #2c3e50;
+            --code-bg: #272822; /* Monokai-ish dark theme */
+            --code-color: #f8f8f2;
+            --border-color: #e0d6c8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--secondary-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-badge {
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #faebd7;
+            color: #a04000;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 6px solid var(--primary-color);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+        }
+
+        .file-header {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #333;
+            display: inline-block;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: #f2e6d9;
+            color: #c0392b;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #f92672; font-weight: bold; } /* keyword */
+        .str { color: #e6db74; } /* string */
+        .cmt { color: #75715e; font-style: italic; } /* comment */
+        .fn { color: #a6e22e; } /* function */
+        .op { color: #f8f8f2; } /* operator */
+        .num { color: #ae81ff; } /* number */
+        .cls { color: #66d9ef; font-style: italic; } /* class/module */
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路爬蟲 (Web Scraping) 基礎教學</h1>
+    <p>資料萃取的起點：6 大核心實戰範例解析</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>爬蟲開發環境準備：</strong><br>
+        網路爬蟲的核心是「取得網頁」與「解析資料」。我們將使用最主流的兩個套件。請在終端機輸入以下指令進行安裝：<br><br>
+        <code>pip install requests beautifulsoup4</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 基礎請求：取得網頁原始碼 (requests)</h2>
+        <p>爬蟲的第一步，就是模擬瀏覽器發送 HTTP 請求給網站，並把 HTML 原始碼抓下來。</p>
+        
+        <div class="file-header">demo1_get_html.py</div>
+        <pre><code><span class="kw">import</span> requests
+
+<span class="cmt"># 1. 指定要抓取的網址 URL</span>
+url <span class="op">=</span> <span class="str">"https://example.com"</span>
+
+<span class="cmt"># 2. 發送 GET 請求</span>
+response <span class="op">=</span> requests.get(url)
+
+<span class="cmt"># 3. 檢查狀態碼 (200 代表成功，404 代表找不到，403 代表被拒絕)</span>
+<span class="kw">print</span>(<span class="str">"狀態碼："</span>, response.status_code)
+
+<span class="cmt"># 4. 印出抓取到的 HTML 文字內容 (這裡只印出前 100 個字元)</span>
+<span class="kw">if</span> response.status_code <span class="op">==</span> <span class="num">200</span>:
+    <span class="kw">print</span>(response.text[:<span class="num">100</span>])</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 解析 HTML：BeautifulSoup 初體驗</h2>
+        <p>抓下來的 <code>response.text</code> 是一大串難以閱讀的字串。我們需要 <strong>BeautifulSoup</strong> 將它轉換為可以輕鬆尋找標籤的結構化物件。</p>
+
+        <div class="file-header">demo2_beautifulsoup.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+
+url <span class="op">=</span> <span class="str">"https://example.com"</span>
+response <span class="op">=</span> requests.get(url)
+
+<span class="cmt"># 將 HTML 字串交給 BeautifulSoup 解析，使用 'html.parser' 解析器</span>
+soup <span class="op">=</span> BeautifulSoup(response.text, <span class="str">"html.parser"</span>)
+
+<span class="cmt"># 輕鬆取得網頁標題 &lt;title&gt;</span>
+<span class="kw">print</span>(<span class="str">"網頁標題標籤："</span>, soup.title)
+<span class="cmt"># 只取出標題的「純文字」部分</span>
+<span class="kw">print</span>(<span class="str">"純文字標題："</span>, soup.title.text)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 尋找元素：find 與 find_all</h2>
+        <p>在解析完的 HTML 中，最常用的兩個指令是：<br>
+        <code>find()</code>：尋找符合條件的<strong>第一個</strong>元素。<br>
+        <code>find_all()</code>：尋找符合條件的<strong>所有</strong>元素，並回傳一個列表 (List)。</p>
+
+        <div class="file-header">demo3_find_elements.py</div>
+        <pre><code><span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+
+<span class="cmt"># 我們準備一段測試用的 HTML 假資料</span>
+html_doc <span class="op">=</span> <span class="str">"""
+&lt;html&gt;
+    &lt;body&gt;
+        &lt;h1 class="main-title"&gt;今日新聞&lt;/h1&gt;
+        &lt;p class="news"&gt;第一條新聞內容...&lt;/p&gt;
+        &lt;p class="news"&gt;第二條新聞內容...&lt;/p&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+"""</span>
+soup <span class="op">=</span> BeautifulSoup(html_doc, <span class="str">"html.parser"</span>)
+
+<span class="cmt"># 尋找第一個 &lt;h1&gt; 標籤</span>
+h1_tag <span class="op">=</span> soup.find(<span class="str">"h1"</span>)
+<span class="kw">print</span>(<span class="str">"H1 文字："</span>, h1_tag.text)
+
+<span class="cmt"># 尋找所有 class 為 'news' 的 &lt;p&gt; 標籤 (注意：Python 中 class 是保留字，所以參數要加底線 class_)</span>
+news_paragraphs <span class="op">=</span> soup.find_all(<span class="str">"p"</span>, class_<span class="op">=</span><span class="str">"news"</span>)
+
+<span class="kw">print</span>(<span class="str">"共找到幾條新聞："</span>, len(news_paragraphs))
+<span class="kw">for</span> news <span class="kw">in</span> news_paragraphs:
+    <span class="kw">print</span>(<span class="str">"-"</span>, news.text)</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 擷取屬性：取得連結 (href) 與圖片 (src)</h2>
+        <p>除了標籤內的文字，我們經常需要抓取標籤的屬性（Attribute），例如 <code>&lt;a&gt;</code> 標籤裡的網址，或是 <code>&lt;img&gt;</code> 裡的圖片來源。</p>
+
+        <div class="file-header">demo4_get_attributes.py</div>
+        <pre><code><span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+
+html_doc <span class="op">=</span> <span class="str">"""
+&lt;div class="links"&gt;
+    &lt;a href="https://google.com" id="link1"&gt;前往 Google&lt;/a&gt;
+    &lt;img src="cat.jpg" alt="可愛貓咪"&gt;
+&lt;/div&gt;
+"""</span>
+soup <span class="op">=</span> BeautifulSoup(html_doc, <span class="str">"html.parser"</span>)
+
+<span class="cmt"># 1. 取得超連結網址</span>
+a_tag <span class="op">=</span> soup.find(<span class="str">"a"</span>)
+<span class="cmt"># 像操作字典一樣，使用 ['屬性名稱'] 或 .get('屬性名稱') 取出屬性值</span>
+link_url <span class="op">=</span> a_tag.get(<span class="str">"href"</span>) 
+<span class="kw">print</span>(<span class="str">"抓取到的網址："</span>, link_url)
+
+<span class="cmt"># 2. 取得圖片來源</span>
+img_tag <span class="op">=</span> soup.find(<span class="str">"img"</span>)
+image_src <span class="op">=</span> img_tag[<span class="str">"src"</span>]
+<span class="kw">print</span>(<span class="str">"圖片檔案來源："</span>, image_src)</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 偽裝瀏覽器：設定 User-Agent</h2>
+        <p>許多網站為了防止爬蟲，會檢查請求是否來自正常的瀏覽器。如果沒有設定 <code>User-Agent</code>，你的請求可能會被拒絕 (回傳 403 Forbidden)。</p>
+
+        <div class="file-header">demo5_user_agent.py</div>
+        <pre><code><span class="kw">import</span> requests
+
+url <span class="op">=</span> <span class="str">"https://www.ptt.cc/bbs/Stock/index.html"</span> <span class="cmt"># 以 PTT 為例</span>
+
+<span class="cmt"># 設定 Headers，偽裝成一般的 Google Chrome 瀏覽器</span>
+headers <span class="op">=</span> {
+    <span class="str">"User-Agent"</span>: <span class="str">"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"</span>
+}
+
+<span class="cmt"># 發送請求時，將 headers 參數帶入</span>
+response <span class="op">=</span> requests.get(url, headers<span class="op">=</span>headers)
+
+<span class="kw">if</span> response.status_code <span class="op">==</span> <span class="num">200</span>:
+    <span class="kw">print</span>(<span class="str">"成功突破防護，抓取成功！"</span>)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"抓取失敗，狀態碼："</span>, response.status_code)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 實戰演練：抓取清單並結構化輸出</h2>
+        <p>將前五個 Demo 結合！假設我們抓取了一個部落格首頁，我們要把所有的文章標題與連結抓出來，並整理成結構化的資料。</p>
+
+        <div class="file-header">demo6_practical_scraping.py</div>
+        <pre><code><span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+
+<span class="cmt"># 模擬抓取到的部落格 HTML</span>
+html_source <span class="op">=</span> <span class="str">"""
+&lt;ul class="article-list"&gt;
+    &lt;li class="item"&gt;
+        &lt;h3&gt;&lt;a href="/post/1"&gt;Python 入門教學&lt;/a&gt;&lt;/h3&gt;
+        &lt;span class="date"&gt;2024-01-01&lt;/span&gt;
+    &lt;/li&gt;
+    &lt;li class="item"&gt;
+        &lt;h3&gt;&lt;a href="/post/2"&gt;爬蟲實戰指南&lt;/a&gt;&lt;/h3&gt;
+        &lt;span class="date"&gt;2024-01-05&lt;/span&gt;
+    &lt;/li&gt;
+&lt;/ul&gt;
+"""</span>
+
+soup <span class="op">=</span> BeautifulSoup(html_source, <span class="str">"html.parser"</span>)
+
+<span class="cmt"># 建立一個空的列表，用來儲存整理好的資料</span>
+scraped_data <span class="op">=</span> []
+
+<span class="cmt"># 1. 找到所有 class 為 'item' 的區塊 (&lt;li&gt;)</span>
+articles <span class="op">=</span> soup.find_all(<span class="str">"li"</span>, class_<span class="op">=</span><span class="str">"item"</span>)
+
+<span class="cmt"># 2. 針對每一篇文章區塊，提取我們想要的資訊</span>
+<span class="kw">for</span> article <span class="kw">in</span> articles:
+    <span class="cmt"># 在縮小的 article 範圍內，尋找 &lt;a&gt; 和 &lt;span&gt;</span>
+    title_tag <span class="op">=</span> article.find(<span class="str">"a"</span>)
+    date_tag <span class="op">=</span> article.find(<span class="str">"span"</span>, class_<span class="op">=</span><span class="str">"date"</span>)
+    
+    <span class="cmt"># 整理成字典 (Dictionary)</span>
+    item_info <span class="op">=</span> {
+        <span class="str">"標題"</span>: title_tag.text,
+        <span class="str">"連結"</span>: <span class="str">"https://myblog.com"</span> <span class="op">+</span> title_tag[<span class="str">"href"</span>], <span class="cmt"># 組合完整網址</span>
+        <span class="str">"日期"</span>: date_tag.text
+    }
+    scraped_data.append(item_info)
+
+<span class="cmt"># 3. 印出最終結果</span>
+<span class="kw">for</span> data <span class="kw">in</span> scraped_data:
+    <span class="kw">print</span>(data)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

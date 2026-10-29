@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路爬蟲進階教學：6 大魔王級實戰範例</title>
+    <style>
+        :root {
+            --primary-color: #c0392b; /* Crimson Red */
+            --secondary-color: #e74c3c; /* Red */
+            --accent-color: #f39c12; /* Orange */
+            --bg-color: #fdfaf9;
+            --text-color: #2c3e50;
+            --code-bg: #1e1e1e; /* VS Code Dark */
+            --code-color: #d4d4d4;
+            --border-color: #fadbd8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--accent-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-badge {
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #fdedec;
+            color: #78281f;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 6px solid var(--primary-color);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+        }
+
+        .file-header {
+            background-color: #2d2d2d;
+            color: #cccccc;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #000;
+            display: inline-block;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: #f9ebea;
+            color: #c0392b;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #569cd6; font-weight: bold; } /* keyword */
+        .str { color: #ce9178; } /* string */
+        .cmt { color: #6a9955; font-style: italic; } /* comment */
+        .fn { color: #dcdcaa; } /* function */
+        .op { color: #d4d4d4; } /* operator */
+        .num { color: #b5cea8; } /* number */
+        .cls { color: #4ec9b0; font-style: italic; } /* class/module */
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路爬蟲 (Web Scraping) 進階教學</h1>
+    <p>突破所有限制：動態渲染、非同步加速與現代爬蟲框架</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>進階爬蟲開發環境準備：</strong><br>
+        進階篇我們將對付完全由 JavaScript 渲染的動態網頁、需要極高併發速度的大量資料抓取，以及反爬蟲機制。<br><br>
+        請在終端機輸入以下指令安裝進階套件：<br>
+        <code>pip install selenium scrapy aiohttp fake-useragent playwright</code><br>
+        <code>playwright install</code> (下載 Playwright 所需的瀏覽器核心)
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> Selenium 基礎：對付 JavaScript 動態渲染網頁</h2>
+        <p>很多網頁（如 SPA 單頁應用）在 <code>requests.get()</code> 抓下來時只有空殼。我們必須使用 <strong>Selenium</strong> 控制真實的瀏覽器打開網頁，等 JS 執行完畢後再抓取資料。</p>
+        
+        <div class="file-header">demo1_selenium_basic.py</div>
+        <pre><code><span class="kw">from</span> selenium <span class="kw">import</span> webdriver
+<span class="kw">from</span> selenium.webdriver.common.by <span class="kw">import</span> By
+<span class="kw">import</span> time
+
+<span class="cmt"># 啟動 Chrome 瀏覽器 (背景執行可加入 headless 參數)</span>
+options <span class="op">=</span> webdriver.ChromeOptions()
+<span class="cmt"># options.add_argument('--headless') # 若不想看到瀏覽器視窗彈出，可取消註解此行</span>
+driver <span class="op">=</span> webdriver.Chrome(options<span class="op">=</span>options)
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(<span class="str">"正在打開動態網頁..."</span>)
+    driver.get(<span class="str">"https://example.com/dynamic-content"</span>)
+    
+    <span class="cmt"># 強制等待 3 秒，讓 JavaScript 有時間載入資料</span>
+    time.sleep(<span class="num">3</span>)
+    
+    <span class="cmt"># 透過 By.CSS_SELECTOR 尋找動態生成的元素</span>
+    titles <span class="op">=</span> driver.find_elements(By.CSS_SELECTOR, <span class="str">"h2.dynamic-title"</span>)
+    
+    <span class="kw">print</span>(f<span class="str">"成功抓取 {len(titles)} 筆動態資料："</span>)
+    <span class="kw">for</span> title <span class="kw">in</span> titles:
+        <span class="kw">print</span>(<span class="str">"-"</span>, title.text)
+        
+<span class="kw">finally</span>:
+    <span class="cmt"># 確保最後一定會關閉瀏覽器，釋放記憶體</span>
+    driver.quit()</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> Selenium 進階：顯式等待與模擬點擊、滾動</h2>
+        <p>死板的 <code>time.sleep()</code> 效率極差。進階爬蟲會使用「顯式等待 (Explicit Wait)」，只要元素一出現就立刻進行下一步。並結合模擬滑鼠滾動來載入「無限下拉」的網頁。</p>
+
+        <div class="file-header">demo2_selenium_interaction.py</div>
+        <pre><code><span class="kw">from</span> selenium <span class="kw">import</span> webdriver
+<span class="kw">from</span> selenium.webdriver.common.by <span class="kw">import</span> By
+<span class="kw">from</span> selenium.webdriver.support.ui <span class="kw">import</span> WebDriverWait
+<span class="kw">from</span> selenium.webdriver.support <span class="kw">import</span> expected_conditions <span class="kw">as</span> EC
+
+driver <span class="op">=</span> webdriver.Chrome()
+driver.get(<span class="str">"https://example.com/infinite-scroll"</span>)
+
+<span class="kw">try</span>:
+    <span class="cmt"># 1. 顯式等待：最多等 10 秒，直到 id 為 'load-more-btn' 的按鈕可以被點擊</span>
+    wait <span class="op">=</span> WebDriverWait(driver, <span class="num">10</span>)
+    btn <span class="op">=</span> wait.until(EC.element_to_be_clickable((By.ID, <span class="str">"load-more-btn"</span>)))
+    
+    <span class="cmt"># 模擬點擊按鈕</span>
+    btn.click()
+    
+    <span class="cmt"># 2. 模擬滑鼠滾動到頁面最底端 (觸發 Ajax 載入更多資料)</span>
+    driver.execute_script(<span class="str">"window.scrollTo(0, document.body.scrollHeight);"</span>)
+    
+    <span class="cmt"># 等待新資料出現 (假設新資料的 class 為 'new-item')</span>
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, <span class="str">"new-item"</span>)))
+    
+    <span class="kw">print</span>(<span class="str">"成功載入並擷取隱藏資料！"</span>)
+
+<span class="kw">finally</span>:
+    driver.quit()</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 極速爬蟲：非同步 (Asyncio + Aiohttp)</h2>
+        <p>如果你要抓取 1000 個網頁，傳統的 requests 是一個一個排隊抓，非常慢。使用 <strong>非同步 (Asynchronous)</strong> 技術，可以在等待伺服器回應時，同時發出其他網頁的請求，速度可提升十倍以上！</p>
+
+        <div class="file-header">demo3_asyncio_aiohttp.py</div>
+        <pre><code><span class="kw">import</span> asyncio
+<span class="kw">import</span> aiohttp
+<span class="kw">import</span> time
+
+<span class="cmt"># 定義一個非同步的抓取函式</span>
+<span class="kw">async def</span> <span class="fn">fetch_page</span>(session, url):
+    <span class="kw">async with</span> session.get(url) <span class="kw">as</span> response:
+        <span class="cmt"># 等待讀取回應內容</span>
+        <span class="kw">return await</span> response.text()
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    urls <span class="op">=</span> [f<span class="str">"https://example.com/page/{i}"</span> <span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">1</span>, <span class="num">51</span>)] <span class="cmt"># 產生 50 個網址</span>
+    
+    <span class="kw">async with</span> aiohttp.ClientSession() <span class="kw">as</span> session:
+        <span class="cmt"># 建立 50 個非同步任務，同時發出請求</span>
+        tasks <span class="op">=</span> [fetch_page(session, url) <span class="kw">for</span> url <span class="kw">in</span> urls]
+        
+        <span class="cmt"># asyncio.gather 會等待所有任務完成，並收集結果</span>
+        results <span class="op">=</span> <span class="kw">await</span> asyncio.gather(*tasks)
+        
+        <span class="kw">print</span>(f<span class="str">"成功抓取了 {len(results)} 個網頁！"</span>)
+
+<span class="kw">if</span> __name__ <span class="op">==</span> <span class="str">"__main__"</span>:
+    start_time <span class="op">=</span> time.time()
+    <span class="cmt"># 執行非同步主程式</span>
+    asyncio.run(main())
+    <span class="kw">print</span>(f<span class="str">"總共耗時：{time.time() - start_time:.2f} 秒"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 工業級爬蟲框架：Scrapy 初體驗</h2>
+        <p><strong>Scrapy</strong> 是一個強大且完整的爬蟲框架。它內建了非同步處理、資料清洗 (Items)、輸出 (Pipeline) 等功能，適合開發大型且需長期維護的爬蟲專案。</p>
+
+        <div class="file-header">demo4_scrapy_spider.py</div>
+        <pre><code><span class="kw">import</span> scrapy
+
+<span class="cmt"># 在終端機執行: scrapy runspider demo4_scrapy_spider.py -o output.json</span>
+
+<span class="kw">class</span> <span class="cls">MySpider</span>(scrapy.Spider):
+    <span class="cmt"># 爬蟲的唯一名稱</span>
+    name <span class="op">=</span> <span class="str">'my_spider'</span>
+    <span class="cmt"># 起始網址</span>
+    start_urls <span class="op">=</span> [<span class="str">'https://quotes.toscrape.com/'</span>]
+
+    <span class="cmt"># 下載完成後會自動呼叫 parse 進行解析</span>
+    <span class="kw">def</span> <span class="fn">parse</span>(self, response):
+        <span class="cmt"># 使用 CSS 選擇器提取資料</span>
+        <span class="kw">for</span> quote <span class="kw">in</span> response.css(<span class="str">'div.quote'</span>):
+            <span class="kw">yield</span> {
+                <span class="str">'text'</span>: quote.css(<span class="str">'span.text::text'</span>).get(),
+                <span class="str">'author'</span>: quote.css(<span class="str">'span small::text'</span>).get(),
+            }
+            
+        <span class="cmt"># 自動尋找下一頁的連結並繼續爬取</span>
+        next_page <span class="op">=</span> response.css(<span class="str">'li.next a::attr(href)'</span>).get()
+        <span class="kw">if</span> next_page <span class="kw">is not None</span>:
+            <span class="kw">yield</span> response.follow(next_page, self.parse)</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 突破反爬蟲：隨機 User-Agent 與 Proxy 代理池</h2>
+        <p>為避免被伺服器封鎖 IP，進階爬蟲必須實作「代理伺服器 (Proxy)」輪替，並使用 `fake-useragent` 套件每次產生不同的瀏覽器指紋。</p>
+
+        <div class="file-header">demo5_anti_scraping.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">from</span> fake_useragent <span class="kw">import</span> UserAgent
+<span class="kw">import</span> random
+
+ua <span class="op">=</span> UserAgent()
+url <span class="op">=</span> <span class="str">"https://httpbin.org/ip"</span> <span class="cmt"># 用來測試當前 IP 的網站</span>
+
+<span class="cmt"># 準備你的 Proxy 代理池 (這裡為範例，實務上需購買或尋找可用 Proxy)</span>
+proxies_list <span class="op">=</span> [
+    <span class="str">"http://123.45.67.89:8080"</span>,
+    <span class="str">"http://98.76.54.32:3128"</span>
+]
+
+<span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">3</span>):
+    <span class="cmt"># 1. 隨機產生一個 User-Agent</span>
+    headers <span class="op">=</span> {<span class="str">"User-Agent"</span>: ua.random}
+    
+    <span class="cmt"># 2. 隨機挑選一個 Proxy</span>
+    proxy <span class="op">=</span> random.choice(proxies_list)
+    proxies <span class="op">=</span> {
+        <span class="str">"http"</span>: proxy,
+        <span class="str">"https"</span>: proxy
+    }
+    
+    <span class="kw">try</span>:
+        <span class="kw">print</span>(f<span class="str">"使用 Proxy: {proxy}, UA: {headers['User-Agent'][:20]}..."</span>)
+        <span class="cmt"># 帶入 headers 與 proxies</span>
+        response <span class="op">=</span> requests.get(url, headers<span class="op">=</span>headers, proxies<span class="op">=</span>proxies, timeout<span class="op">=</span><span class="num">5</span>)
+        <span class="kw">print</span>(<span class="str">"伺服器看到的你的 IP："</span>, response.json()[<span class="str">'origin'</span>])
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">print</span>(<span class="str">"Proxy 連線失敗，請更換節點。"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 現代爬蟲救星：Playwright 攔截網路請求 (API)</h2>
+        <p><strong>Playwright</strong> 是比 Selenium 更新、更快的新一代自動化工具。更厲害的是，它可以直接監聽並「攔截」網頁背景發出的 API 請求，讓你連 HTML 都不用解析，直接從封包中劫走 JSON 數據！</p>
+
+        <div class="file-header">demo6_playwright_intercept.py</div>
+        <pre><code><span class="kw">from</span> playwright.sync_api <span class="kw">import</span> sync_playwright
+
+<span class="kw">def</span> <span class="fn">run</span>(playwright):
+    browser <span class="op">=</span> playwright.chromium.launch(headless<span class="op">=</span><span class="kw">True</span>)
+    page <span class="op">=</span> browser.new_page()
+
+    <span class="cmt"># 定義事件處理函式：當網頁發出任何 Response 時觸發</span>
+    <span class="kw">def</span> <span class="fn">handle_response</span>(response):
+        <span class="cmt"># 判斷網址是否是我們要找的背景 API</span>
+        <span class="kw">if</span> <span class="str">"/api/v1/hidden-data"</span> <span class="kw">in</span> response.url <span class="kw">and</span> response.status <span class="op">==</span> <span class="num">200</span>:
+            <span class="kw">print</span>(<span class="str">"【成功劫截 API 數據】"</span>)
+            <span class="kw">print</span>(response.json()) <span class="cmt"># 直接拿到最乾淨的 JSON 數據</span>
+
+    <span class="cmt"># 綁定監聽事件</span>
+    page.on(<span class="str">"response"</span>, handle_response)
+
+    <span class="kw">print</span>(<span class="str">"打開網頁，等待網頁自動載入數據..."</span>)
+    page.goto(<span class="str">"https://example.com/complex-dashboard"</span>)
+    
+    <span class="cmt"># 等待網頁完全載入</span>
+    page.wait_for_load_state(<span class="str">"networkidle"</span>)
+    
+    browser.close()
+
+<span class="kw">with</span> sync_playwright() <span class="kw">as</span> playwright:
+    run(playwright)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

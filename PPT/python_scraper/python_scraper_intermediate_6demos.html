@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 網路爬蟲中階教學：6 大進階實戰範例</title>
+    <style>
+        :root {
+            --primary-color: #008080; /* Teal */
+            --secondary-color: #20b2aa; /* Light Sea Green */
+            --accent-color: #ff6347; /* Tomato for highlights */
+            --bg-color: #f4fcfc;
+            --text-color: #2f4f4f; /* Dark Slate Gray */
+            --code-bg: #2b2b2b;
+            --code-color: #f8f8f2;
+            --border-color: #cce7e7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--secondary-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-badge {
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #e0f2f1;
+            color: #004d40;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 6px solid var(--primary-color);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+        }
+
+        .file-header {
+            background-color: #1a1a1a;
+            color: #d4d4d4;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #333;
+            display: inline-block;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: #e6f4f4;
+            color: #d35400;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #cc7832; font-weight: bold; } /* keyword */
+        .str { color: #6a8759; } /* string */
+        .cmt { color: #808080; font-style: italic; } /* comment */
+        .fn { color: #ffc66d; } /* function */
+        .op { color: #a9b7c6; } /* operator */
+        .num { color: #6897bb; } /* number */
+        .cls { color: #a9b7c6; font-style: italic; } /* class/module */
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 網路爬蟲 (Web Scraping) 中階教學</h1>
+    <p>應對真實世界挑戰：6 大進階資料抓取與處理技巧</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>中階爬蟲準備：</strong><br>
+        基礎篇我們學會了抓取單一靜態網頁。中階篇我們將面對「分頁處理」、「動態載入 (AJAX)」、「保持登入狀態」以及「反爬蟲機制」。<br><br>
+        新增安裝套件：<code>pip install pandas lxml</code> (用於快速解析表格資料)
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 處理多頁面：自動翻頁抓取</h2>
+        <p>資料通常會分散在多個頁面中。我們可以使用 <code>for</code> 迴圈與字串格式化 (f-string) 來動態產生網址並連續抓取。</p>
+        
+        <div class="file-header">demo1_pagination.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+<span class="kw">import</span> time
+
+<span class="cmt"># 假設目標網站的網址結構是 page=1, page=2...</span>
+base_url <span class="op">=</span> <span class="str">"https://example.com/articles?page="</span>
+
+<span class="cmt"># 抓取第 1 頁到第 3 頁</span>
+<span class="kw">for</span> page <span class="kw">in</span> range(<span class="num">1</span>, <span class="num">4</span>):
+    url <span class="op">=</span> f<span class="str">"{base_url}{page}"</span>
+    <span class="kw">print</span>(f<span class="str">"正在抓取：{url}"</span>)
+    
+    response <span class="op">=</span> requests.get(url)
+    soup <span class="op">=</span> BeautifulSoup(response.text, <span class="str">"html.parser"</span>)
+    
+    <span class="cmt"># 假設每篇文章的標題都在 &lt;h2 class="title"&gt; 中</span>
+    titles <span class="op">=</span> soup.find_all(<span class="str">"h2"</span>, class_<span class="op">=</span><span class="str">"title"</span>)
+    <span class="kw">for</span> title <span class="kw">in</span> titles:
+        <span class="kw">print</span>(<span class="str">"-"</span>, title.text)
+        
+    <span class="cmt"># 禮貌性延遲，避免短時間發送過多請求被鎖 IP</span>
+    time.sleep(<span class="num">2</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 抓取動態資料：直接呼叫 Ajax API (JSON)</h2>
+        <p>很多現代網頁（如電商網站、社群媒體）不會將資料寫在 HTML 裡，而是透過背景發送 API 請求載入。與其用 BeautifulSoup 解析 HTML，不如直接抓取 API 回傳的 <strong>JSON</strong> 資料，這樣更快且更精準。</p>
+
+        <div class="file-header">demo2_ajax_json.py</div>
+        <pre><code><span class="kw">import</span> requests
+
+<span class="cmt"># 透過瀏覽器 F12 "Network" (網路) 面板，找出資料實際來源的 API 網址</span>
+api_url <span class="op">=</span> <span class="str">"https://example.com/api/products"</span>
+
+<span class="cmt"># 有些 API 需要帶參數 (Query String)</span>
+params <span class="op">=</span> {
+    <span class="str">"category"</span>: <span class="str">"electronics"</span>,
+    <span class="str">"limit"</span>: <span class="num">10</span>
+}
+
+response <span class="op">=</span> requests.get(api_url, params<span class="op">=</span>params)
+
+<span class="kw">if</span> response.status_code <span class="op">==</span> <span class="num">200</span>:
+    <span class="cmt"># 直接將回傳的 JSON 轉換為 Python 的字典 (Dictionary) 或列表 (List)</span>
+    data <span class="op">=</span> response.json()
+    
+    <span class="kw">print</span>(f<span class="str">"成功取得 {len(data['items'])} 筆產品資料："</span>)
+    <span class="kw">for</span> item <span class="kw">in</span> data[<span class="str">'items'</span>]:
+        <span class="kw">print</span>(f<span class="str">"品名: {item['name']}, 價格: {item['price']}"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 檔案與圖片下載</h2>
+        <p>爬蟲不只能抓文字，也能下載圖片或 PDF 檔案。這需要使用 <code>response.content</code> (二進位資料) 配合 Python 的檔案寫入操作。</p>
+
+        <div class="file-header">demo3_download_file.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> os
+
+image_url <span class="op">=</span> <span class="str">"https://example.com/images/sample.jpg"</span>
+<span class="cmt"># 準備儲存的檔名</span>
+filename <span class="op">=</span> <span class="str">"downloaded_image.jpg"</span>
+
+<span class="kw">print</span>(f<span class="str">"開始下載圖片..."</span>)
+response <span class="op">=</span> requests.get(image_url)
+
+<span class="kw">if</span> response.status_code <span class="op">==</span> <span class="num">200</span>:
+    <span class="cmt"># 開啟檔案，模式設定為 'wb' (Write Binary)</span>
+    <span class="kw">with</span> open(filename, <span class="str">"wb"</span>) <span class="kw">as</span> file:
+        <span class="cmt"># 將二進位內容寫入檔案</span>
+        file.write(response.content)
+    <span class="kw">print</span>(f<span class="str">"圖片已成功儲存為 {filename}"</span>)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"下載失敗！"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 保持登入狀態：使用 requests.Session</h2>
+        <p>有些網頁必須登入後才能看。如果每次都用 <code>requests.get()</code>，伺服器會認為你是不同的未登入訪客。我們可以使用 <code>Session</code> 物件來自動記錄 Cookies。</p>
+
+        <div class="file-header">demo4_session_login.py</div>
+        <pre><code><span class="kw">import</span> requests
+
+login_url <span class="op">=</span> <span class="str">"https://example.com/login"</span>
+target_data_url <span class="op">=</span> <span class="str">"https://example.com/my-profile"</span>
+
+<span class="cmt"># 準備登入的帳號密碼資料 (根據目標網站的表單 name 屬性設定)</span>
+payload <span class="op">=</span> {
+    <span class="str">"username"</span>: <span class="str">"my_account"</span>,
+    <span class="str">"password"</span>: <span class="str">"secret123"</span>
+}
+
+<span class="cmt"># 建立一個 Session 實例，它會自動幫我們管理 Cookies</span>
+session <span class="op">=</span> requests.Session()
+
+<span class="cmt"># 1. 發送 POST 請求進行登入</span>
+<span class="kw">print</span>(<span class="str">"嘗試登入..."</span>)
+session.post(login_url, data<span class="op">=</span>payload)
+
+<span class="cmt"># 2. 使用同一個 session 發送 GET 請求抓取需要權限的網頁</span>
+response <span class="op">=</span> session.get(target_data_url)
+
+<span class="kw">if</span> <span class="str">"登出"</span> <span class="kw">in</span> response.text: <span class="cmt"># 簡單驗證是否成功登入</span>
+    <span class="kw">print</span>(<span class="str">"登入成功！已抓取受保護的資料。"</span>)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"登入失敗。"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 禮貌爬蟲與錯誤重試機制</h2>
+        <p>網路環境不穩定，或是網站偶爾無回應。一個健壯的爬蟲程式碼需要具備「超時設定 (Timeout)」與「錯誤重試 (Retry)」的能力。</p>
+
+        <div class="file-header">demo5_retry_and_timeout.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">import</span> time
+
+url <span class="op">=</span> <span class="str">"https://example.com/unstable-page"</span>
+max_retries <span class="op">=</span> <span class="num">3</span>
+
+<span class="kw">for</span> attempt <span class="kw">in</span> range(max_retries):
+    <span class="kw">try</span>:
+        <span class="kw">print</span>(f<span class="str">"第 {attempt + 1} 次嘗試連線..."</span>)
+        <span class="cmt"># timeout=5 代表如果 5 秒內伺服器沒回應，就主動放棄並觸發例外</span>
+        response <span class="op">=</span> requests.get(url, timeout<span class="op">=</span><span class="num">5</span>)
+        
+        <span class="cmt"># 如果狀態碼不是 200，會主動拋出 HTTPError</span>
+        response.raise_for_status() 
+        
+        <span class="kw">print</span>(<span class="str">"抓取成功！"</span>)
+        <span class="kw">break</span> <span class="cmt"># 成功就跳出迴圈</span>
+        
+    <span class="kw">except</span> requests.exceptions.RequestException <span class="kw">as</span> e:
+        <span class="kw">print</span>(f<span class="str">"發生錯誤：{e}"</span>)
+        <span class="kw">if</span> attempt <span class="op">&lt;</span> max_retries <span class="op">-</span> <span class="num">1</span>:
+            <span class="kw">print</span>(<span class="str">"等待 3 秒後重試..."</span>)
+            time.sleep(<span class="num">3</span>)
+        <span class="kw">else</span>:
+            <span class="kw">print</span>(<span class="str">"已達最大重試次數，放棄抓取。"</span>)</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 神兵利器：使用 Pandas 秒抓 HTML 表格</h2>
+        <p>如果你要抓的資料剛好是網頁上的 <code>&lt;table&gt;</code>（例如股票數據、匯率表），使用 <code>pandas.read_html()</code> 是最快的方法，它可以直接將 HTML 表格轉為 DataFrame，連 BeautifulSoup 都不用寫！</p>
+
+        <div class="file-header">demo6_pandas_table.py</div>
+        <pre><code><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="cmt"># 目標網址 (假設該網頁包含表格)</span>
+url <span class="op">=</span> <span class="str">"https://example.com/stock-prices"</span>
+
+<span class="kw">try</span>:
+    <span class="kw">print</span>(<span class="str">"正在解析網頁表格..."</span>)
+    <span class="cmt"># read_html 會回傳一個列表，包含網頁中「所有」找到的表格</span>
+    tables <span class="op">=</span> pd.read_html(url)
+    
+    <span class="kw">print</span>(f<span class="str">"網頁中共找到 {len(tables)} 個表格。"</span>)
+    
+    <span class="cmt"># 假設我們需要的是第一個表格 (索引為 0)</span>
+    df <span class="op">=</span> tables[<span class="num">0</span>]
+    
+    <span class="cmt"># 印出表格前 5 筆資料</span>
+    <span class="kw">print</span>(df.head())
+    
+    <span class="cmt"># (加碼) 將抓到的資料直接存成 CSV 檔案</span>
+    df.to_csv(<span class="str">"stock_prices.csv"</span>, index<span class="op">=</span><span class="kw">False</span>, encoding<span class="op">=</span><span class="str">"utf-8-sig"</span>)
+    <span class="kw">print</span>(<span class="str">"資料已儲存為 stock_prices.csv"</span>)
+    
+<span class="kw">except</span> ValueError:
+    <span class="kw">print</span>(<span class="str">"在該網頁找不到任何 HTML 表格！"</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

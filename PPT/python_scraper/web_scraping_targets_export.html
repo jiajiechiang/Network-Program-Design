@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 爬蟲實戰教學：4 大主題與資料匯出</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #1abc9c;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --code-bg: #282c34;
+            --code-color: #abb2bf;
+            --border-color: #bdc3c7;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); }
+        header { background-color: var(--primary-color); color: white; padding: 3rem 0; text-align: center; border-bottom: 5px solid var(--accent-color); }
+        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 2.5rem; margin-bottom: 2rem; border: 1px solid var(--border-color); }
+        h2 { color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1rem; display: flex; align-items: center; }
+        h3 { color: var(--secondary-color); margin: 1.5rem 0 1rem 0; }
+        p { margin-bottom: 1rem; }
+        .alert { background-color: #e8f8f5; color: #117a65; padding: 1.5rem; border-radius: 6px; border-left: 6px solid var(--accent-color); margin-bottom: 2rem; }
+        .file-header { background-color: #1e1e1e; color: #d4d4d4; padding: 0.5rem 1rem; font-family: monospace; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.95rem; border-bottom: 1px solid #333; }
+        pre { background-color: var(--code-bg); color: var(--code-color); padding: 1.5rem; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; overflow-x: auto; margin-bottom: 1.5rem; margin-top: 0; font-family: 'Consolas', monospace; font-size: 0.95rem; line-height: 1.5; }
+        code { background-color: #eaeded; color: #c0392b; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        pre code { background-color: transparent; color: inherit; padding: 0; font-size: 1em; }
+        ul, ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        li { margin-bottom: 0.5rem; }
+        .kw { color: #c678dd; font-weight: bold; }
+        .str { color: #98c379; }
+        .cmt { color: #7f848e; font-style: italic; }
+        .fn { color: #61afef; }
+        .badge { background: var(--accent-color); color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; margin-right: 0.5rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python 爬蟲實戰教學</h1>
+    <p>4 大主題網站解析與 CSV/Excel 資料匯出</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>事前準備：</strong><br>
+        本教學將使用 <code>requests</code>, <code>beautifulsoup4</code> 以及 <code>pandas</code>。<br>
+        匯出 Excel 需要額外安裝套件，請在終端機輸入：<br>
+        <code>pip install requests beautifulsoup4 pandas openpyxl</code>
+    </div>
+
+    <div class="card">
+        <h2>如何觀察網頁結構 (F12 開發者工具)</h2>
+        <p>在開始寫程式前，<strong>觀察網頁結構</strong>是最重要的一步。每個網站的程式碼都不一樣，請依照以下步驟找出你要的資料：</p>
+        <ol>
+            <li>在目標網頁上按鍵盤 <strong>F12</strong> (或右鍵選擇「檢查」) 打開開發者工具。</li>
+            <li>點擊左上角的<strong>「元素選取器」</strong>(一個小箭頭的圖示)。</li>
+            <li>將滑鼠移動到你想抓取的資料上 (例如新聞標題、商品價格)，點擊下去。</li>
+            <li>右側的原始碼面板會亮起對應的 HTML 標籤。觀察它的 <code>&lt;標籤名稱&gt;</code> 與 <code>class</code> 或 <code>id</code> 屬性。</li>
+            <li>例如：看到 <code>&lt;h2 class="news-title"&gt;標題&lt;/h2&gt;</code>，你的程式碼就要寫 <code>soup.find('h2', class_='news-title')</code>。</li>
+        </ol>
+    </div>
+
+    <!-- 主題 1：新聞 -->
+    <div class="card">
+        <h2><span class="badge">主題 1</span> 新聞網站 (News)</h2>
+        <p>新聞網站通常結構比較靜態。重點在於找出「列表清單」的共同 <code>class</code>，抓取<strong>標題</strong>與<strong>文章連結</strong>。</p>
+        
+        <div class="file-header">1_news_scraper.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+
+url <span class="op">=</span> <span class="str">"https://example-news-website.com"</span>
+res <span class="op">=</span> requests.get(url)
+soup <span class="op">=</span> BeautifulSoup(res.text, <span class="str">"html.parser"</span>)
+
+news_list <span class="op">=</span> []
+<span class="cmt"># 假設新聞標題都放在 &lt;h3 class="article-title"&gt; 裡面的 &lt;a&gt; 標籤</span>
+articles <span class="op">=</span> soup.find_all(<span class="str">"h3"</span>, class_<span class="op">=</span><span class="str">"article-title"</span>)
+
+<span class="kw">for</span> article <span class="kw">in</span> articles:
+    link_tag <span class="op">=</span> article.find(<span class="str">"a"</span>)
+    <span class="kw">if</span> link_tag:
+        title <span class="op">=</span> link_tag.text.strip()
+        link <span class="op">=</span> link_tag.get(<span class="str">"href"</span>)
+        news_list.append({<span class="str">"標題"</span>: title, <span class="str">"連結"</span>: link})
+
+<span class="kw">print</span>(news_list)</code></pre>
+    </div>
+
+    <!-- 主題 2：電商 -->
+    <div class="card">
+        <h2><span class="badge">主題 2</span> 電商網站 (E-commerce)</h2>
+        <p>電商網站的重點是抓取<strong>商品名稱</strong>與<strong>價格</strong>。注意：很多大型電商 (如 Shopee, PChome) 是動態載入的，如果用 BeautifulSoup 抓不到，需要改用 F12 的「Network」面板找 JSON API。</p>
+
+        <div class="file-header">2_ecommerce_scraper.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+
+url <span class="op">=</span> <span class="str">"https://example-ecommerce.com/category/laptops"</span>
+res <span class="op">=</span> requests.get(url)
+soup <span class="op">=</span> BeautifulSoup(res.text, <span class="str">"html.parser"</span>)
+
+products_data <span class="op">=</span> []
+<span class="cmt"># 假設每個商品被包在 &lt;div class="product-item"&gt;</span>
+items <span class="op">=</span> soup.find_all(<span class="str">"div"</span>, class_<span class="op">=</span><span class="str">"product-item"</span>)
+
+<span class="kw">for</span> item <span class="kw">in</span> items:
+    <span class="cmt"># 尋找名稱與價格的特徵標籤</span>
+    name <span class="op">=</span> item.find(<span class="str">"div"</span>, class_<span class="op">=</span><span class="str">"prod-name"</span>).text.strip()
+    price <span class="op">=</span> item.find(<span class="str">"span"</span>, class_<span class="op">=</span><span class="str">"price-val"</span>).text.strip()
+    products_data.append({<span class="str">"商品名稱"</span>: name, <span class="str">"價格"</span>: price})
+
+<span class="kw">print</span>(products_data)</code></pre>
+    </div>
+
+    <!-- 主題 3：氣象 -->
+    <div class="card">
+        <h2><span class="badge">主題 3</span> 氣象網站 (Weather)</h2>
+        <p>氣象網站通常會有明確的區塊顯示各地的<strong>溫度</strong>與<strong>降雨機率</strong>。也可以直接利用中央氣象署的公開 API (JSON) 來抓取會更精準。</p>
+
+        <div class="file-header">3_weather_scraper.py</div>
+        <pre><code><span class="kw">import</span> requests
+<span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+
+url <span class="op">=</span> <span class="str">"https://example-weather.com/taiwan"</span>
+res <span class="op">=</span> requests.get(url)
+soup <span class="op">=</span> BeautifulSoup(res.text, <span class="str">"html.parser"</span>)
+
+weather_list <span class="op">=</span> []
+<span class="cmt"># 假設每筆天氣資訊在 &lt;div class="city-weather"&gt; 中</span>
+cities <span class="op">=</span> soup.find_all(<span class="str">"div"</span>, class_<span class="op">=</span><span class="str">"city-weather"</span>)
+
+<span class="kw">for</span> city <span class="kw">in</span> cities:
+    city_name <span class="op">=</span> city.find(<span class="str">"h4"</span>).text.strip()
+    temp <span class="op">=</span> city.find(<span class="str">"div"</span>, class_<span class="op">=</span><span class="str">"temperature"</span>).text.strip()
+    rain_prob <span class="op">=</span> city.find(<span class="str">"span"</span>, class_<span class="op">=</span><span class="str">"rain"</span>).text.strip()
+    
+    weather_list.append({
+        <span class="str">"城市"</span>: city_name, 
+        <span class="str">"溫度"</span>: temp, 
+        <span class="str">"降雨機率"</span>: rain_prob
+    })</code></pre>
+    </div>
+
+    <!-- 主題 4：股票 -->
+    <div class="card">
+        <h2><span class="badge">主題 4</span> 股票網站 (Stocks)</h2>
+        <p>股票資料通常以「表格 (Table)」呈現。這時候我們可以直接使用強大的 <code>pandas.read_html()</code>，它可以一秒將網頁上的 <code>&lt;table&gt;</code> 轉為資料表，省去寫 BeautifulSoup 的麻煩。</p>
+
+        <div class="file-header">4_stock_scraper.py</div>
+        <pre><code><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+url <span class="op">=</span> <span class="str">"https://example-stock-market.com/daily-quotes"</span>
+
+<span class="kw">try</span>:
+    <span class="cmt"># read_html 會找尋網頁中所有的 &lt;table&gt;，回傳一個 List</span>
+    dfs <span class="op">=</span> pd.read_html(url)
+    
+    <span class="cmt"># 假設我們要的股票數據在網頁的第一個表格裡</span>
+    stock_df <span class="op">=</span> dfs[<span class="num">0</span>]
+    
+    <span class="kw">print</span>(<span class="str">"股票資料抓取成功！前 5 筆如下："</span>)
+    <span class="kw">print</span>(stock_df.head())
+    
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="kw">print</span>(<span class="str">"抓取表格失敗："</span>, e)</code></pre>
+    </div>
+
+    <!-- 資料儲存 -->
+    <div class="card">
+        <h2><span class="badge">終極應用</span> 將資料存成 CSV 與 Excel 檔案</h2>
+        <p>不論你抓的是新聞、電商還是天氣，最後我們都會將資料整理成 Python 的 <strong>List of Dictionaries (字典列表)</strong>。接著只要交給 <code>pandas</code>，兩行程式碼就能匯出檔案！</p>
+
+        <div class="file-header">5_export_data.py</div>
+        <pre><code><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="cmt"># 這是我們剛剛抓到的資料 (以電商為例)</span>
+data <span class="op">=</span> [
+    {<span class="str">"商品名稱"</span>: <span class="str">"電競筆電 A"</span>, <span class="str">"價格"</span>: <span class="str">"35,000"</span>},
+    {<span class="str">"商品名稱"</span>: <span class="str">"無線滑鼠 B"</span>, <span class="str">"價格"</span>: <span class="str">"990"</span>},
+    {<span class="str">"商品名稱"</span>: <span class="str">"機械鍵盤 C"</span>, <span class="str">"價格"</span>: <span class="str">"2,500"</span>}
+]
+
+<span class="cmt"># 1. 將資料轉換為 Pandas 的 DataFrame 表格結構</span>
+df <span class="op">=</span> pd.DataFrame(data)
+
+<span class="cmt"># 2. 儲存成 CSV 檔案</span>
+<span class="cmt"># index=False 代表不要輸出左側的 0,1,2 數字索引</span>
+<span class="cmt"># encoding='utf-8-sig' 確保用 Excel 打開 CSV 時中文不會亂碼</span>
+df.to_csv(<span class="str">"ecommerce_products.csv"</span>, index<span class="kw">=False</span>, encoding<span class="op">=</span><span class="str">'utf-8-sig'</span>)
+<span class="kw">print</span>(<span class="str">"CSV 儲存成功！"</span>)
+
+<span class="cmt"># 3. 儲存成 Excel 檔案 (.xlsx)</span>
+<span class="cmt"># 注意：需要安裝 openpyxl 套件 (pip install openpyxl)</span>
+df.to_excel(<span class="str">"ecommerce_products.xlsx"</span>, index<span class="kw">=False</span>)
+<span class="kw">print</span>(<span class="str">"Excel 儲存成功！"</span>)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>
