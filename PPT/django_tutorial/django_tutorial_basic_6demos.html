@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Django 基礎教學：網站與 API 開發 6 大實戰</title>
+    <style>
+        :root {
+            --primary-color: #0C4B33; /* Django Green */
+            --secondary-color: #44B78B; /* Light Django Green */
+            --accent-color: #F5A623; /* Orange/Yellow for highlights */
+            --bg-color: #f7f9f8;
+            --text-color: #333333;
+            --code-bg: #1e2122;
+            --code-color: #e8e8e8;
+            --border-color: #d1dcd7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--secondary-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-badge {
+            background-color: var(--secondary-color);
+            color: white;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #eef5f2;
+            color: #0a3d29;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 6px solid var(--primary-color);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+        }
+
+        .file-header {
+            background-color: #2c3631;
+            color: #d4d4d4;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #1e2122;
+            display: inline-block;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: #e2e8e5;
+            color: #b33a3a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .folder-structure {
+            background-color: #fff;
+            border: 1px dashed var(--border-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre;
+            margin-bottom: 1.5rem;
+            color: #34495e;
+            line-height: 1.5;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #cc7832; font-weight: bold; } /* keyword */
+        .str { color: #6a8759; } /* string */
+        .cmt { color: #808080; font-style: italic; } /* comment */
+        .fn { color: #ffc66d; } /* function */
+        .cls { color: #a9b7c6; font-style: italic; } /* class/module */
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python Django 基礎教學</h1>
+    <p>功能完整的全端 Web 框架：建立網站與 API 的 6 大核心範例</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>Django 環境建置與觀念：</strong><br>
+        Django 是一個重量級的 MTV (Model-Template-View) 框架，內建資料庫管理、後台、安全機制，非常適合開發完整的企業級網站。<br><br>
+        安裝指令：<code>pip install django</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 建立專案與啟動伺服器</h2>
+        <p>Django 有著嚴謹的目錄結構，我們必須透過指令來產生專案架構，並建立我們第一個應用程式 (App)。</p>
+        
+        <h3>1. 在終端機執行以下指令：</h3>
+        <pre><code><span class="cmt"># 建立名為 myproject 的主專案</span>
+django-admin startproject myproject
+
+<span class="cmt"># 進入專案資料夾</span>
+cd myproject
+
+<span class="cmt"># 建立一個名為 myapp 的應用程式模組</span>
+python manage.py startapp myapp</code></pre>
+
+        <h3>2. 註冊 App 到主專案中：</h3>
+        <p>打開 <code>myproject/settings.py</code>，找到 <code>INSTALLED_APPS</code> 並加入 <code>'myapp'</code>。</p>
+        <div class="file-header">myproject/settings.py</div>
+        <pre><code>INSTALLED_APPS = [
+    <span class="str">'django.contrib.admin'</span>,
+    <span class="str">'django.contrib.auth'</span>,
+    <span class="str">'django.contrib.contenttypes'</span>,
+    <span class="str">'django.contrib.sessions'</span>,
+    <span class="str">'django.contrib.messages'</span>,
+    <span class="str">'django.contrib.staticfiles'</span>,
+    <span class="cmt"># 加入我們剛剛建立的 app</span>
+    <span class="str">'myapp'</span>, 
+]</code></pre>
+
+        <h3>3. 啟動測試伺服器：</h3>
+        <pre><code>python manage.py runserver</code></pre>
+        <p>打開瀏覽器造訪 <code>http://127.0.0.1:8000/</code>，看到火箭起飛畫面即代表成功！</p>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 第一個視圖與路由 (View & URL)</h2>
+        <p>在 Django 中，網址是由 <code>urls.py</code> 負責分配，而邏輯處理是由 <code>views.py</code> 負責。</p>
+
+        <h3>1. 撰寫 View (視圖邏輯)</h3>
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> django.shortcuts <span class="kw">import</span> render
+<span class="kw">from</span> django.http <span class="kw">import</span> HttpResponse
+
+<span class="kw">def</span> <span class="fn">hello_world</span>(request):
+    <span class="cmt"># 接收使用者的 request，回傳一段簡單的 HTML 字串</span>
+    <span class="kw">return</span> HttpResponse(<span class="str">"&lt;h1&gt;Hello Django! 這是我的第一個視圖&lt;/h1&gt;"</span>)</code></pre>
+
+        <h3>2. 設定 URL 路由</h3>
+        <p>將網址 <code>/hello/</code> 對應到剛剛寫的 <code>hello_world</code> 函式。</p>
+        <div class="file-header">myproject/urls.py</div>
+        <pre><code><span class="kw">from</span> django.contrib <span class="kw">import</span> admin
+<span class="kw">from</span> django.urls <span class="kw">import</span> path
+<span class="kw">from</span> myapp <span class="kw">import</span> views <span class="cmt"># 匯入 myapp 的 views</span>
+
+urlpatterns <span class="op">=</span> [
+    path(<span class="str">'admin/'</span>, admin.site.urls),
+    <span class="cmt"># 設定路由，造訪 /hello/ 時執行 views.hello_world</span>
+    path(<span class="str">'hello/'</span>, views.hello_world),
+]</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> 模板渲染 (Templates)</h2>
+        <p>實務上我們不會在 Python 檔案裡寫 HTML，而是使用 <code>render</code> 將變數傳遞給獨立的 HTML 模板檔案。</p>
+
+        <h3>1. 建立模板檔案</h3>
+        <p>在 <code>myapp</code> 資料夾內建立 <code>templates/myapp/</code> 資料夾，並新增 <code>index.html</code>。</p>
+        <div class="file-header">myapp/templates/myapp/index.html</div>
+        <pre><code><span class="cmt">&lt;!-- 使用雙大括號 {{ }} 顯示後端傳來的變數 --&gt;</span>
+&lt;h1&gt;歡迎，{{ user_name }}！&lt;/h1&gt;
+&lt;p&gt;您目前有 {{ messages_count }} 則新通知。&lt;/p&gt;</code></pre>
+
+        <h3>2. 撰寫 View</h3>
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">def</span> <span class="fn">index_page</span>(request):
+    <span class="cmt"># 準備要傳給 HTML 的資料字典 (Context)</span>
+    context_data <span class="op">=</span> {
+        <span class="str">"user_name"</span>: <span class="str">"Tony"</span>,
+        <span class="str">"messages_count"</span>: <span class="num">5</span>
+    }
+    <span class="cmt"># 使用 render 渲染模板，並把 context_data 傳過去</span>
+    <span class="kw">return</span> render(request, <span class="str">'myapp/index.html'</span>, context_data)</code></pre>
+        <p><em>(記得要在 <code>urls.py</code> 加上 <code>path('index/', views.index_page)</code> 喔！)</em></p>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 資料庫模型與內建後台 (Models & Admin)</h2>
+        <p>Django 的殺手級功能：用 Python 寫 Class 就能建立資料表，還自動送你一個強大的管理後台！</p>
+
+        <h3>1. 定義資料表模型 (Model)</h3>
+        <div class="file-header">myapp/models.py</div>
+        <pre><code><span class="kw">from</span> django.db <span class="kw">import</span> models
+
+<span class="kw">class</span> <span class="cls">Article</span>(models.Model):
+    <span class="cmt"># 定義文章標題 (最大長度 100)</span>
+    title <span class="op">=</span> models.CharField(max_length<span class="op">=</span><span class="num">100</span>)
+    <span class="cmt"># 定義文章內容 (長文本)</span>
+    content <span class="op">=</span> models.TextField()
+    <span class="cmt"># 建立時間 (自動記錄當下時間)</span>
+    created_at <span class="op">=</span> models.DateTimeField(auto_now_add<span class="op">=</span><span class="kw">True</span>)
+
+    <span class="kw">def</span> <span class="fn">__str__</span>(self):
+        <span class="kw">return</span> self.title <span class="cmt"># 在後台顯示文章標題</span></code></pre>
+
+        <h3>2. 執行資料庫遷移 (Migrations)</h3>
+        <p>在終端機執行以下指令，讓 Django 幫你自動建立 SQLite 資料表：</p>
+        <pre><code>python manage.py makemigrations
+python manage.py migrate</code></pre>
+
+        <h3>3. 註冊到後台並建立超級管理員</h3>
+        <div class="file-header">myapp/admin.py</div>
+        <pre><code><span class="kw">from</span> django.contrib <span class="kw">import</span> admin
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+
+<span class="cmt"># 註冊模型，讓它出現在 Django 管理後台</span>
+admin.site.register(Article)</code></pre>
+        <p>在終端機輸入 <code>python manage.py createsuperuser</code> 建立帳號，然後造訪 <code>http://127.0.0.1:8000/admin/</code> 即可登入新增文章！</p>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 查詢資料庫並顯示在網頁</h2>
+        <p>我們要把剛剛在後台新增的文章，抓出來並顯示在前端網頁上。</p>
+
+        <h3>1. 撰寫 View (讀取資料庫)</h3>
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> django.shortcuts <span class="kw">import</span> render
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+
+<span class="kw">def</span> <span class="fn">article_list</span>(request):
+    <span class="cmt"># 使用 ORM 語法取得資料庫中所有的文章，並依照時間新到舊排序</span>
+    articles <span class="op">=</span> Article.objects.all().order_by(<span class="str">'-created_at'</span>)
+    
+    <span class="kw">return</span> render(request, <span class="str">'myapp/article_list.html'</span>, {<span class="str">'articles'</span>: articles})</code></pre>
+
+        <h3>2. 撰寫 Template (顯示資料)</h3>
+        <div class="file-header">myapp/templates/myapp/article_list.html</div>
+        <pre><code>&lt;h2&gt;最新文章列表&lt;/h2&gt;
+&lt;ul&gt;
+    <span class="cmt">&lt;!-- 使用 Django 模板標籤迴圈印出文章 --&gt;</span>
+    {% for article in articles %}
+        &lt;li&gt;
+            &lt;h3&gt;{{ article.title }}&lt;/h3&gt;
+            &lt;p&gt;{{ article.content }}&lt;/p&gt;
+            &lt;small&gt;發布時間：{{ article.created_at }}&lt;/small&gt;
+        &lt;/li&gt;
+    {% endfor %}
+&lt;/ul&gt;</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 建立基礎 JSON API (API 教學)</h2>
+        <p>除了回傳 HTML 網頁，現代後端最重要的工作是提供 API 給前端 (Vue/React) 或手機 App 呼叫。在不使用額外套件的情況下，我們可以使用 Django 內建的 <code>JsonResponse</code> 來達成。</p>
+
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> django.http <span class="kw">import</span> JsonResponse
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+
+<span class="kw">def</span> <span class="fn">api_article_list</span>(request):
+    <span class="cmt"># 取得所有文章</span>
+    articles <span class="op">=</span> Article.objects.all()
+    
+    <span class="cmt"># 將 Django Model 物件轉換為 Python 字典列表</span>
+    data_list <span class="op">=</span> []
+    <span class="kw">for</span> a <span class="kw">in</span> articles:
+        data_list.append({
+            <span class="str">"id"</span>: a.id,
+            <span class="str">"title"</span>: a.title,
+            <span class="str">"content"</span>: a.content,
+            <span class="str">"created_at"</span>: a.created_at.strftime(<span class="str">"%Y-%m-%d %H:%M:%S"</span>)
+        })
+        
+    <span class="cmt"># 回傳 JSON 格式的 HTTP Response</span>
+    <span class="kw">return</span> JsonResponse({
+        <span class="str">"status"</span>: <span class="str">"success"</span>,
+        <span class="str">"total"</span>: len(data_list),
+        <span class="str">"data"</span>: data_list
+    }, safe=<span class="kw">False</span>)</code></pre>
+        <p><em>(在 <code>urls.py</code> 加上 <code>path('api/articles/', views.api_article_list)</code>，打開瀏覽器就能看到 JSON 格式的資料囉！)</em></p>
+    </div>
+
+</div>
+
+</body>
+</html>

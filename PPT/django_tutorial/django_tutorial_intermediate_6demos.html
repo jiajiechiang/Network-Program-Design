@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Django 中階教學：網站與 API 開發 6 大實戰</title>
+    <style>
+        :root {
+            --primary-color: #1F5F40; /* Darker Django Green */
+            --secondary-color: #2F875D; /* Mid Django Green */
+            --accent-color: #E67E22; /* Warm Orange for contrast */
+            --bg-color: #f4f7f6;
+            --text-color: #2c3e50;
+            --code-bg: #272822; /* Monokai Dark */
+            --code-color: #f8f8f2;
+            --border-color: #d1dcd7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--accent-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-badge {
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #eaf1ee;
+            color: #123725;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 6px solid var(--primary-color);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+        }
+
+        .file-header {
+            background-color: #1a1a1a;
+            color: #d4d4d4;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #333;
+            display: inline-block;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: #e2e8e5;
+            color: #b33a3a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 1em;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #f92672; font-weight: bold; } /* keyword */
+        .str { color: #e6db74; } /* string */
+        .cmt { color: #75715e; font-style: italic; } /* comment */
+        .fn { color: #a6e22e; } /* function */
+        .cls { color: #66d9ef; font-style: italic; } /* class/module */
+        .dec { color: #a6e22e; } /* decorator */
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python Django 中階教學</h1>
+    <p>強大後端解密：表單、驗證、類別視圖與 DRF 框架</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>中階開發環境準備：</strong><br>
+        在中階教學中，我們將學習如何專業地處理表單、使用者驗證，以及引進業界最廣泛使用的 <strong>Django REST Framework (DRF)</strong> 來開發專業 API。<br><br>
+        請在終端機輸入安裝指令：<code>pip install djangorestframework</code><br>
+        (記得在 settings.py 的 INSTALLED_APPS 加入 <code>'rest_framework'</code>)
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> Django Forms：自動生成與驗證表單</h2>
+        <p>不需手寫繁瑣的 HTML 表單！Django 提供 ModelForm，可以直接把資料庫模型轉換成安全的網頁表單，並自動進行資料驗證 (例如：防範空白、格式錯誤)。</p>
+        
+        <div class="file-header">myapp/forms.py</div>
+        <pre><code><span class="kw">from</span> django <span class="kw">import</span> forms
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+
+<span class="cmt"># 建立綁定 Model 的表單</span>
+<span class="kw">class</span> <span class="cls">ArticleForm</span>(forms.ModelForm):
+    <span class="kw">class</span> <span class="cls">Meta</span>:
+        model <span class="op">=</span> Article
+        fields <span class="op">=</span> [<span class="str">'title'</span>, <span class="str">'content'</span>] <span class="cmt"># 允許使用者輸入的欄位</span></code></pre>
+
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> django.shortcuts <span class="kw">import</span> render, redirect
+<span class="kw">from</span> .forms <span class="kw">import</span> ArticleForm
+
+<span class="kw">def</span> <span class="fn">create_article</span>(request):
+    <span class="kw">if</span> request.method <span class="op">==</span> <span class="str">"POST"</span>:
+        <span class="cmt"># 將 POST 傳來的資料交給 Form 綁定</span>
+        form <span class="op">=</span> ArticleForm(request.POST)
+        <span class="kw">if</span> form.is_valid(): <span class="cmt"># 通過安全與格式驗證</span>
+            form.save()     <span class="cmt"># 自動存入資料庫</span>
+            <span class="kw">return</span> redirect(<span class="str">'article_list'</span>)
+    <span class="kw">else</span>:
+        <span class="cmt"># GET 請求：產生空表單</span>
+        form <span class="op">=</span> ArticleForm()
+        
+    <span class="kw">return</span> render(request, <span class="str">'myapp/create_article.html'</span>, {<span class="str">'form'</span>: form})</code></pre>
+
+        <div class="file-header">myapp/templates/myapp/create_article.html</div>
+        <pre><code>&lt;form method="POST"&gt;
+    <span class="cmt">&lt;!-- 必須加入 CSRF Token 防止跨站攻擊 --&gt;</span>
+    {% csrf_token %}
+    <span class="cmt">&lt;!-- form.as_p 會自動把表單渲染成 &lt;p&gt; 標籤包覆的 HTML --&gt;</span>
+    {{ form.as_p }}
+    &lt;button type="submit"&gt;發布文章&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> 權限與驗證：需要登入才能訪問的頁面</h2>
+        <p>Django 內建了完整的 Auth 系統。我們可以使用簡單的裝飾器 (Decorator) 輕鬆鎖住某些頁面，限制只有登入的使用者能觀看或操作。</p>
+
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> django.contrib.auth.decorators <span class="kw">import</span> login_required
+<span class="kw">from</span> django.shortcuts <span class="kw">import</span> render
+
+<span class="cmt"># 加上這個裝飾器，未登入者會被自動導向 settings.LOGIN_URL 指定的登入頁面</span>
+<span class="dec">@login_required</span>
+<span class="kw">def</span> <span class="fn">dashboard</span>(request):
+    <span class="cmt"># 可以透過 request.user 取得目前登入的使用者物件</span>
+    context <span class="op">=</span> {
+        <span class="str">'username'</span>: request.user.username,
+        <span class="str">'email'</span>: request.user.email
+    }
+    <span class="kw">return</span> render(request, <span class="str">'myapp/dashboard.html'</span>, context)</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> Class-Based Views (CBV)：類別視圖</h2>
+        <p>當你在寫「顯示列表」、「顯示單一內容」時，邏輯通常很固定。Django 提供了 <code>ListView</code> 和 <code>DetailView</code> 等類別視圖，能大幅減少重複的程式碼。</p>
+
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> django.views.generic <span class="kw">import</span> ListView, DetailView
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+
+<span class="cmt"># 取代原本寫了好幾行的 article_list 函式</span>
+<span class="kw">class</span> <span class="cls">ArticleListView</span>(ListView):
+    model <span class="op">=</span> Article
+    template_name <span class="op">=</span> <span class="str">'myapp/article_list.html'</span>
+    context_object_name <span class="op">=</span> <span class="str">'articles'</span>
+    ordering <span class="op">=</span> [<span class="str">'-created_at'</span>] <span class="cmt"># 新到舊排序</span>
+
+<span class="cmt"># 自動處理根據 PK 抓取單筆文章的邏輯</span>
+<span class="kw">class</span> <span class="cls">ArticleDetailView</span>(DetailView):
+    model <span class="op">=</span> Article
+    template_name <span class="op">=</span> <span class="str">'myapp/article_detail.html'</span>
+    context_object_name <span class="op">=</span> <span class="str">'article'</span></code></pre>
+
+        <p><strong>注意：</strong>在 urls.py 中綁定時，寫法要改為 <code>path('articles/', views.ArticleListView.as_view())</code>。</p>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 進階 ORM 查詢：Q 物件與搜尋功能</h2>
+        <p>當我們想做網站的「搜尋引擎」時，需要使用 <code>filter</code> 搭配 `__icontains`，若要達成 "OR" 條件 (例如標題或內容包含關鍵字)，則必須引進 <code>Q</code> 物件。</p>
+
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> django.shortcuts <span class="kw">import</span> render
+<span class="kw">from</span> django.db.models <span class="kw">import</span> Q
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+
+<span class="kw">def</span> <span class="fn">search_articles</span>(request):
+    <span class="cmt"># 取得網址列上的 ?q=關鍵字</span>
+    query <span class="op">=</span> request.GET.get(<span class="str">'q'</span>, <span class="str">''</span>)
+    
+    <span class="kw">if</span> query:
+        <span class="cmt"># 尋找 標題(title) 或 內容(content) 包含關鍵字的文章，icontains 代表不分大小寫</span>
+        results <span class="op">=</span> Article.objects.filter(
+            Q(title__icontains<span class="op">=</span>query) | Q(content__icontains<span class="op">=</span>query)
+        )
+    <span class="kw">else</span>:
+        results <span class="op">=</span> Article.objects.none() <span class="cmt"># 沒輸入關鍵字就回傳空</span>
+        
+    <span class="kw">return</span> render(request, <span class="str">'myapp/search.html'</span>, {<span class="str">'results'</span>: results, <span class="str">'query'</span>: query})</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 導入 DRF：強大的 Serializers (序列化)</h2>
+        <p>在基礎篇我們手動將 Model 轉成字典再轉 JSON。使用 Django REST Framework (DRF)，<strong>Serializer</strong> 會自動幫我們把 Model 轉換成標準的 JSON 格式。</p>
+
+        <div class="file-header">myapp/serializers.py (需手動新增此檔案)</div>
+        <pre><code><span class="kw">from</span> rest_framework <span class="kw">import</span> serializers
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+
+<span class="kw">class</span> <span class="cls">ArticleSerializer</span>(serializers.ModelSerializer):
+    <span class="kw">class</span> <span class="cls">Meta</span>:
+        model <span class="op">=</span> Article
+        <span class="cmt"># '__all__' 代表將所有欄位轉換為 JSON</span>
+        fields <span class="op">=</span> <span class="str">'__all__'</span></code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 打造專業 RESTful API 介面</h2>
+        <p>結合剛剛寫好的 Serializer，我們利用 DRF 的 <code>@api_view</code> 裝飾器，輕鬆完成支援 GET 與 POST 的現代化 API 節點，DRF 還會附贈一個漂亮的 API 測試網頁！</p>
+
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> rest_framework.decorators <span class="kw">import</span> api_view
+<span class="kw">from</span> rest_framework.response <span class="kw">import</span> Response
+<span class="kw">from</span> rest_framework <span class="kw">import</span> status
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+<span class="kw">from</span> .serializers <span class="kw">import</span> ArticleSerializer
+
+<span class="dec">@api_view</span>([<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">article_api</span>(request):
+    <span class="kw">if</span> request.method <span class="op">==</span> <span class="str">'GET'</span>:
+        <span class="cmt"># 1. 抓取所有文章</span>
+        articles <span class="op">=</span> Article.objects.all()
+        <span class="cmt"># 2. 透過 Serializer 轉換為 JSON 格式 (many=True 代表這是一個列表)</span>
+        serializer <span class="op">=</span> ArticleSerializer(articles, many<span class="op">=</span><span class="kw">True</span>)
+        <span class="kw">return</span> Response(serializer.data)
+        
+    <span class="kw">elif</span> request.method <span class="op">==</span> <span class="str">'POST'</span>:
+        <span class="cmt"># 1. 將前端送來的 JSON 放入 Serializer 解析</span>
+        serializer <span class="op">=</span> ArticleSerializer(data<span class="op">=</span>request.data)
+        <span class="cmt"># 2. 如果資料格式正確，自動存入資料庫</span>
+        <span class="kw">if</span> serializer.is_valid():
+            serializer.save()
+            <span class="cmt"># 回傳成功狀態碼 201 Created</span>
+            <span class="kw">return</span> Response(serializer.data, status<span class="op">=</span>status.HTTP_201_CREATED)
+        <span class="cmt"># 失敗則回傳 400 Bad Request 以及錯誤原因</span>
+        <span class="kw">return</span> Response(serializer.errors, status<span class="op">=</span>status.HTTP_400_BAD_REQUEST)</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

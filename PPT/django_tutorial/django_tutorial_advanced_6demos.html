@@ -1,0 +1,369 @@
+html_content_django_advanced = r'''<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Django 進階教學：企業級架構與 API 6 大魔王實戰</title>
+    <style>
+        :root {
+            --primary-color: #0b3624; /* Deep Django Green */
+            --secondary-color: #27ae60; /* Emerald Green */
+            --accent-color: #f1c40f; /* Sun Yellow for highlights */
+            --bg-color: #121212; /* Dark background */
+            --text-color: #e0e0e0;
+            --code-bg: #1e1e1e; /* Darker code block */
+            --code-color: #d4d4d4;
+            --border-color: #333333;
+            --card-bg: #1e1e1e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--secondary-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        header p {
+            color: #b3d4c6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-badge {
+            background-color: var(--secondary-color);
+            color: #000;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        h3 {
+            color: #ffffff;
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            background-color: #1a2520;
+            color: #2ecc71;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 6px solid var(--secondary-color);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+            border: 1px solid #234232;
+        }
+
+        .file-header {
+            background-color: #000000;
+            color: #888888;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #333;
+            display: inline-block;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        pre {
+            background-color: #151515;
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            border: 1px solid #333;
+            border-top: none;
+        }
+
+        code {
+            background-color: #333;
+            color: var(--accent-color);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border: none;
+            font-size: 1em;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #569cd6; font-weight: bold; } /* keyword */
+        .str { color: #ce9178; } /* string */
+        .cmt { color: #6a9955; font-style: italic; } /* comment */
+        .fn { color: #dcdcaa; } /* function */
+        .cls { color: #4ec9b0; font-style: italic; } /* class/module */
+        .dec { color: #c586c0; } /* decorator */
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Python Django 進階教學</h1>
+    <p>打造百萬流量架構：非同步、快取、JWT 與 ViewSets 的 6 大實戰</p>
+</header>
+
+<div class="container">
+
+    <div class="alert">
+        <strong>進階開發環境準備：</strong><br>
+        在進階教學中，我們將探討現代企業級後端不可或缺的技術，包含：自訂 User、非同步任務 (Celery)、WebSocket 通訊 (Channels)、JWT 驗證以及快取機制 (Redis)。<br><br>
+        建議安裝套件：<code>pip install celery redis djangorestframework-simplejwt channels</code>
+    </div>
+
+    <!-- DEMO 1 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 1</span> 企業必備：自訂使用者模型 (Custom User Model)</h2>
+        <p>Django 官方強烈建議，在專案一開始就使用 <code>AbstractUser</code> 自訂使用者模型。未來如果想把登入方式從「帳號」改成「Email」，或增加「手機號碼」欄位，都會非常方便。</p>
+        
+        <div class="file-header">users/models.py</div>
+        <pre><code><span class="kw">from</span> django.contrib.auth.models <span class="kw">import</span> AbstractUser
+<span class="kw">from</span> django.db <span class="kw">import</span> models
+
+<span class="kw">class</span> <span class="cls">CustomUser</span>(AbstractUser):
+    <span class="cmt"># 新增自訂欄位，例如：手機號碼與大頭貼</span>
+    phone_number <span class="op">=</span> models.CharField(max_length<span class="op">=</span><span class="num">15</span>, blank<span class="op">=</span><span class="kw">True</span>, null<span class="op">=</span><span class="kw">True</span>)
+    avatar <span class="op">=</span> models.ImageField(upload_to<span class="op">=</span><span class="str">'avatars/'</span>, blank<span class="op">=</span><span class="kw">True</span>, null<span class="op">=</span><span class="kw">True</span>)
+
+    <span class="kw">def</span> <span class="fn">__str__</span>(self):
+        <span class="kw">return</span> self.username</code></pre>
+
+        <div class="file-header">myproject/settings.py</div>
+        <pre><code><span class="cmt"># 告訴 Django 不要使用內建的 User，改用我們剛剛寫的 CustomUser</span>
+AUTH_USER_MODEL <span class="op">=</span> <span class="str">'users.CustomUser'</span></code></pre>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 2</span> DRF 進階：使用 ViewSets 與 Routers</h2>
+        <p>在中階篇我們使用了 <code>@api_view</code>，但當你要做完整的 CRUD (增刪改查) 時，程式碼會很長。<strong>ViewSets</strong> 搭配 <strong>Routers</strong> 可以用不到 5 行程式碼，自動產生完整且符合 RESTful 規範的 API (含列表、詳細、新增、修改、刪除)。</p>
+
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> rest_framework <span class="kw">import</span> viewsets
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+<span class="kw">from</span> .serializers <span class="kw">import</span> ArticleSerializer
+
+<span class="cmt"># ModelViewSet 已經內建了 CRUD 的所有邏輯</span>
+<span class="kw">class</span> <span class="cls">ArticleViewSet</span>(viewsets.ModelViewSet):
+    queryset <span class="op">=</span> Article.objects.all()
+    serializer_class <span class="op">=</span> ArticleSerializer</code></pre>
+
+        <div class="file-header">myproject/urls.py</div>
+        <pre><code><span class="kw">from</span> django.urls <span class="kw">import</span> path, include
+<span class="kw">from</span> rest_framework.routers <span class="kw">import</span> DefaultRouter
+<span class="kw">from</span> myapp.views <span class="kw">import</span> ArticleViewSet
+
+<span class="cmt"># 建立路由器並註冊 ViewSet</span>
+router <span class="op">=</span> DefaultRouter()
+router.register(<span class="str">r'articles'</span>, ArticleViewSet)
+
+urlpatterns <span class="op">=</span> [
+    <span class="cmt"># Router 會自動幫我們產生 /articles/ 以及 /articles/&lt;id&gt;/ 的 API 節點</span>
+    path(<span class="str">'api/'</span>, include(router.urls)),
+]</code></pre>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 3</span> API 安全：JWT 身份驗證 (SimpleJWT)</h2>
+        <p>前後端分離架構中，Cookie/Session 容易遇到跨網域 (CORS) 問題。業界標準是使用 <strong>JSON Web Token (JWT)</strong>。前端登入後取得 Token，之後每次發 API 都在 Header 帶上 Token 證明身分。</p>
+
+        <div class="file-header">myproject/settings.py</div>
+        <pre><code>REST_FRAMEWORK <span class="op">=</span> {
+    <span class="str">'DEFAULT_AUTHENTICATION_CLASSES'</span>: (
+        <span class="str">'rest_framework_simplejwt.authentication.JWTAuthentication'</span>,
+    ),
+}</code></pre>
+
+        <div class="file-header">myproject/urls.py</div>
+        <pre><code><span class="kw">from</span> rest_framework_simplejwt.views <span class="kw">import</span> (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
+urlpatterns <span class="op">+=</span> [
+    <span class="cmt"># 發送 POST 給此網址(帶入 username 與 password)，若正確則回傳 Access Token 與 Refresh Token</span>
+    path(<span class="str">'api/token/'</span>, TokenObtainPairView.as_view(), name<span class="op">=</span><span class="str">'token_obtain_pair'</span>),
+    <span class="cmt"># Access Token 過期時，用此網址換發新 Token</span>
+    path(<span class="str">'api/token/refresh/'</span>, TokenRefreshView.as_view(), name<span class="op">=</span><span class="str">'token_refresh'</span>),
+]</code></pre>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 4</span> 非同步背景任務：Celery + Redis</h2>
+        <p>如果在使用者按下註冊後，伺服器要寄送驗證信 (耗時 3 秒)，使用者就會卡在白畫面。我們應該將這類耗時任務交給 <strong>Celery</strong> 放到背景執行 (Background Tasks)。</p>
+
+        <div class="file-header">myapp/tasks.py</div>
+        <pre><code><span class="kw">from</span> celery <span class="kw">import</span> shared_task
+<span class="kw">import</span> time
+
+<span class="cmt"># 宣告這是一個 Celery 背景任務</span>
+<span class="dec">@shared_task</span>
+<span class="kw">def</span> <span class="fn">send_welcome_email</span>(user_email):
+    <span class="kw">print</span>(f<span class="str">"開始寄送信件給 {user_email}..."</span>)
+    time.sleep(<span class="num">5</span>) <span class="cmt"># 模擬耗時的寄信動作</span>
+    <span class="kw">print</span>(<span class="str">"信件寄送完畢！"</span>)
+    <span class="kw">return</span> <span class="str">"Success"</span></code></pre>
+
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> django.http <span class="kw">import</span> JsonResponse
+<span class="kw">from</span> .tasks <span class="kw">import</span> send_welcome_email
+
+<span class="kw">def</span> <span class="fn">register_user</span>(request):
+    <span class="cmt"># ... 處理註冊邏輯 ...</span>
+    
+    <span class="cmt"># 使用 .delay() 呼叫任務，任務會被丟進 Redis 佇列，由背後的 Celery Worker 執行</span>
+    <span class="cmt"># Django 可以立刻回傳 Response，完全不需等待！</span>
+    send_welcome_email.delay(<span class="str">'newuser@example.com'</span>)
+    
+    <span class="kw">return</span> JsonResponse({<span class="str">"message"</span>: <span class="str">"註冊成功！驗證信已在背景寄出。"</span>})</code></pre>
+    </div>
+
+    <!-- DEMO 5 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 5</span> 提升百倍效能：Redis 快取機制 (Caching)</h2>
+        <p>對於流量極大的頁面 (如首頁、排行榜)，每次造訪都去資料庫重新計算是非常耗能的。我們可以使用 Django 內建的快取機制，將結果暫存在記憶體 (Redis) 中。</p>
+
+        <div class="file-header">myproject/settings.py</div>
+        <pre><code><span class="cmt"># 設定 Django 使用 Redis 作為快取後端</span>
+CACHES <span class="op">=</span> {
+    <span class="str">"default"</span>: {
+        <span class="str">"BACKEND"</span>: <span class="str">"django_redis.cache.RedisCache"</span>,
+        <span class="str">"LOCATION"</span>: <span class="str">"redis://127.0.0.1:6379/1"</span>,
+        <span class="str">"OPTIONS"</span>: {
+            <span class="str">"CLIENT_CLASS"</span>: <span class="str">"django_redis.client.DefaultClient"</span>,
+        }
+    }
+}</code></pre>
+
+        <div class="file-header">myapp/views.py</div>
+        <pre><code><span class="kw">from</span> django.views.decorators.cache <span class="kw">import</span> cache_page
+<span class="kw">from</span> django.shortcuts <span class="kw">import</span> render
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+
+<span class="cmt"># 使用裝飾器，將這個頁面的結果快取 15 分鐘 (60秒 * 15)</span>
+<span class="cmt"># 接下來 15 分鐘內的所有造訪，Django 都不會查詢資料庫，直接從 Redis 秒回傳結果！</span>
+<span class="dec">@cache_page</span>(<span class="num">60</span> <span class="op">*</span> <span class="num">15</span>)
+<span class="kw">def</span> <span class="fn">popular_articles</span>(request):
+    articles <span class="op">=</span> Article.objects.order_by(<span class="str">'-views'</span>)[:<span class="num">10</span>] <span class="cmt"># 非常耗時的查詢</span>
+    <span class="kw">return</span> render(request, <span class="str">'myapp/popular.html'</span>, {<span class="str">'articles'</span>: articles})</code></pre>
+    </div>
+
+    <!-- DEMO 6 -->
+    <div class="card">
+        <h2><span class="demo-badge">Demo 6</span> 即時通訊：Django Channels (WebSockets)</h2>
+        <p>傳統的 HTTP 只能「前端問，後端答」。如果要做聊天室或股票即時報價，必須使用 <strong>WebSockets</strong> 達成雙向通訊。Django Channels 賦予了 Django 處理 WebSocket 的能力。</p>
+
+        <div class="file-header">myapp/consumers.py</div>
+        <pre><code><span class="kw">import</span> json
+<span class="kw">from</span> channels.generic.websocket <span class="kw">import</span> AsyncWebsocketConsumer
+
+<span class="cmt"># 類似於 View，但專門處理 WebSocket 連線</span>
+<span class="kw">class</span> <span class="cls">ChatConsumer</span>(AsyncWebsocketConsumer):
+    <span class="kw">async def</span> <span class="fn">connect</span>(self):
+        <span class="cmt"># 接受前端的 WebSocket 連線請求</span>
+        <span class="kw">await</span> self.accept()
+        <span class="cmt"># 主動推播訊息給前端</span>
+        <span class="kw">await</span> self.send(text_data<span class="op">=</span>json.dumps({
+            <span class="str">'message'</span>: <span class="str">'連線成功！歡迎來到聊天室'</span>
+        }))
+
+    <span class="kw">async def</span> <span class="fn">disconnect</span>(self, close_code):
+        <span class="kw">pass</span> <span class="cmt"># 處理斷線邏輯</span>
+
+    <span class="kw">async def</span> <span class="fn">receive</span>(self, text_data):
+        <span class="cmt"># 接收到前端傳來的訊息</span>
+        text_data_json <span class="op">=</span> json.loads(text_data)
+        message <span class="op">=</span> text_data_json[<span class="str">'message'</span>]
+
+        <span class="cmt"># 把訊息原封不動回傳給前端 (Echo Server 概念)</span>
+        <span class="kw">await</span> self.send(text_data<span class="op">=</span>json.dumps({
+            <span class="str">'message'</span>: f<span class="str">"伺服器已收到您的訊息: {message}"</span>
+        }))</code></pre>
+    </div>
+
+</div>
+
+</body>
+</html>'''
+
+with open("django_tutorial_advanced_6demos.html", "w", encoding="utf-8") as f:
+    f.write(html_content_django_advanced)
+
+print("django_tutorial_advanced_6demos.html created successfully.")
